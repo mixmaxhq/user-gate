@@ -1,11 +1,21 @@
 var crypto = require('crypto');
 
-function encode(emails) {
-  return emails.map((email) => {
-    var hash = crypto.createHash('sha256');
-    hash.update(email);
-    return hash.digest('base64');
-  });
+function UserGate(options) {
+  this._userList = options.userList || [];
 }
 
-module.exports = encode;
+Object.assign(UserGate.prototype, {
+  toJSON: function() {
+    return {
+      userList: this._encodedUserList()
+    };
+  },
+
+  _encodedUserList: function() {
+    return this._userList.map((user) => {
+      return crypto.createHash('sha256').update(user).digest('base64');
+    });
+  }
+});
+
+module.exports = UserGate;
