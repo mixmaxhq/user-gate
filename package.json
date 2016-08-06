@@ -27,6 +27,11 @@
   "devDependencies": {
     "jasmine": "^2.4.1",
     "jasmine-promises": "^0.4.1",
+    "mock-fs": "^3.11.0",
     "webpack": "^1.13.1"
+  },
+  "dependencies": {
+    "event-stream": "^3.3.4",
+    "JSONStream": "^1.1.4"
   }
 }
