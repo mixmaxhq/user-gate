@@ -1,0 +1,32 @@
+{
+  "name": "user-gate",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/node/index.js",
+  "scripts": {
+    "test": "jasmine",
+    "build": "webpack src/browser/exports.js dist/bundle.js && webpack -pd src/browser/exports.js dist/bundle.min.js",
+    "build-test": "webpack --watch spec/browser/indexSpec.js spec/browser/spec.bundle.js",
+    "open-test": "open spec/browser/jasmine.html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mixmaxhq/user-gate.git"
+  },
+  "keywords": [
+    "feature",
+    "user",
+    "gate"
+  ],
+  "author": "Jeff Wear <jeff@mixmax.com> (https://mixmax.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mixmaxhq/user-gate/issues"
+  },
+  "homepage": "https://github.com/mixmaxhq/user-gate#readme",
+  "devDependencies": {
+    "jasmine": "^2.4.1",
+    "jasmine-promises": "^0.4.1",
+    "webpack": "^1.13.1"
+  }
+}

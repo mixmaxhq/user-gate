@@ -1,0 +1,14 @@
+{
+  // If you are using SublimeLinter, after modifying this config file, be sure to close and reopen
+  // the file(s) you were editing to see the changes take effect.
+
+  "extends": "../../.jshintrc",
+
+  // Make JSHint aware of browser globals.
+  "browser": true,
+
+  "globals": {
+    "crypto": false,
+    "Promise": false
+  }
+}

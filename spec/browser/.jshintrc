@@ -1,0 +1,9 @@
+{
+  // If you are using SublimeLinter, after modifying this config file, be sure to close and reopen
+  // the file(s) you were editing to see the changes take effect.
+
+  "extends": "../../src/browser/.jshintrc",
+
+  // Whitelist Jasmine's global variables so JSHint doesn't complain about them being undefined.
+  "jasmine": true
+}
