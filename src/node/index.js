@@ -5,12 +5,14 @@ var JSONStream = require('JSONStream');
 function UserGate(options) {
   options = options || {};
   this._userList = options.userList || [];
+  this._userSample = options.userSample || 0;
 }
 
 Object.assign(UserGate.prototype, {
   toJSON: function() {
     return {
-      userList: this._userList.map(encodeUser)
+      userList: this._userList.map(encodeUser),
+      userSample: this._userSample
     };
   },
 
@@ -24,7 +26,7 @@ Object.assign(UserGate.prototype, {
     // new elements in the middle.
     var op = '{"userList":[',
         sep = ',',
-        cl = ']}';
+        cl = `],"userSample":${this._userSample}}`;
 
     // `es.pipeline` pipes these streams together but causes writes to go to the first
     // stream and reads to come from the last, whereas if we just returned the result of
