@@ -28,7 +28,6 @@ node_modules
 .lock-wscript
 
 .DS_Store
-spec/browser/spec.bundle.js
 *.sublime-workspace
 
-spec/browser/spec.bundle.js
+spec/gate/spec.bundle.js

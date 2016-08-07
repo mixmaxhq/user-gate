@@ -1,5 +1,15 @@
-/* global require:false, module:false */
-var arrayBufferToBase64 = require('./arrayBufferToBase64');
+var os = require('os');
+
+// Webpack adds a shim for `os.platform` that returns this value.
+var IS_BROWSER = os.platform() === 'browser';
+
+var arrayBufferToBase64, crypto;
+if (IS_BROWSER) {
+  arrayBufferToBase64 = require('./arrayBufferToBase64');
+  crypto = window.crypto;
+} else {
+  crypto = require('crypto');
+}
 
 function UserGate(options) {
   options = options || {};
@@ -36,14 +46,26 @@ Object.assign(UserGate.prototype, {
         return;
       }
 
-      var buffer = new TextEncoder('utf-8').encode(user);
-      crypto.subtle.digest('SHA-256', buffer)
+      Promise.resolve()
+        .then(function() {
+          if (IS_BROWSER) {
+            var buffer = new TextEncoder('utf-8').encode(user);
+            return crypto.subtle.digest('SHA-256', buffer);
+          } else {
+            return crypto.createHash('sha256').update(user);
+          }
+        })
         .then(function(hash) {
-          var base64User = arrayBufferToBase64(hash);
+          if (IS_BROWSER) {
+            return arrayBufferToBase64(hash);
+          } else {
+            return hash.digest('base64');
+          }
+        })
+        .then(function(base64User) {
           var anyUserMatches = self._userList.indexOf(base64User) > -1;
           resolve(anyUserMatches);
         })
-        // Can this fail? https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest does not say.
         .catch(reject);
     });
   },

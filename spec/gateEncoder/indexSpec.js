@@ -2,15 +2,15 @@ var es = require('event-stream');
 var fs = require('fs');
 var JSONStream = require('JSONStream');
 var mockFs = require('mock-fs');
-var UserGate = require('../../src/node');
+var UserGateEncoder = require('../../src/gateEncoder');
 
-describe('UserGate', function() {
+describe('UserGateEncoder', function() {
   afterEach(function() {
     mockFs.restore();
   });
 
   it('should work', function(done) {
-    expect(new UserGate({
+    expect(new UserGateEncoder({
       userList: ['jeff@mixmax.com'],
       userSample: 0.25
     }).toJSON()).toEqual({
@@ -18,7 +18,7 @@ describe('UserGate', function() {
       userSample: 0.25
     });
 
-    var gate = new UserGate({
+    var gate = new UserGateEncoder({
       userList: ['jeff@mixmax.com'],
       userSample: 0.25
     });
@@ -42,7 +42,7 @@ describe('UserGate', function() {
 
   describe('userList', function() {
     it('should encode the specified user', function() {
-      expect(new UserGate({
+      expect(new UserGateEncoder({
         userList: ['jeff@mixmax.com']
       }).toJSON()).toEqual(jasmine.objectContaining({
         userList: ['vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU=']
@@ -50,7 +50,7 @@ describe('UserGate', function() {
     });
 
     it('should encode multiple users', function() {
-      expect(new UserGate({
+      expect(new UserGateEncoder({
         userList: ['jeff@mixmax.com', 'bar@mixmax.com']
       }).toJSON()).toEqual(jasmine.objectContaining({
         userList: [
@@ -61,14 +61,14 @@ describe('UserGate', function() {
     });
 
     it('should default to zero users', function() {
-      expect(new UserGate({ userList: [] }).toJSON()).toEqual(jasmine.objectContaining({ userList: [] }));
-      expect(new UserGate({}).toJSON()).toEqual(jasmine.objectContaining({ userList: [] }));
-      expect(new UserGate().toJSON()).toEqual(jasmine.objectContaining({ userList: [] }));
+      expect(new UserGateEncoder({ userList: [] }).toJSON()).toEqual(jasmine.objectContaining({ userList: [] }));
+      expect(new UserGateEncoder({}).toJSON()).toEqual(jasmine.objectContaining({ userList: [] }));
+      expect(new UserGateEncoder().toJSON()).toEqual(jasmine.objectContaining({ userList: [] }));
     });
 
     describe('streaming', function() {
       it('should handle writing an empty array to the stream', function(done) {
-        var gate = new UserGate({
+        var gate = new UserGateEncoder({
           userList: []
         });
 
@@ -85,7 +85,7 @@ describe('UserGate', function() {
       });
 
       it('should write JSON stringification to stream', function(done) {
-        var gate = new UserGate({
+        var gate = new UserGateEncoder({
           userList: ['jeff@mixmax.com', 'bar@mixmax.com']
         });
 
@@ -111,7 +111,7 @@ describe('UserGate', function() {
           'users.json': JSON.stringify(['jeff@mixmax.com', 'bar@mixmax.com'])
         });
 
-        var gate = new UserGate();
+        var gate = new UserGateEncoder();
 
         fs.createReadStream('users.json', 'utf8')
           .pipe(JSONStream.parse('*'))
@@ -136,7 +136,7 @@ describe('UserGate', function() {
           'users.json': JSON.stringify(['bar@mixmax.com'])
         });
 
-        var gate = new UserGate({
+        var gate = new UserGateEncoder({
           userList: ['jeff@mixmax.com']
         });
 
@@ -162,13 +162,13 @@ describe('UserGate', function() {
 
   describe('userSample', function() {
     it('should default to 0', function() {
-      expect(new UserGate().toJSON()).toEqual(jasmine.objectContaining({
+      expect(new UserGateEncoder().toJSON()).toEqual(jasmine.objectContaining({
         userSample: 0
       }));
     });
 
     it('should preserve the specified number', function() {
-      expect(new UserGate({ userSample: 0.5 }).toJSON()).toEqual(jasmine.objectContaining({
+      expect(new UserGateEncoder({ userSample: 0.5 }).toJSON()).toEqual(jasmine.objectContaining({
         userSample: 0.5
       }));
     });

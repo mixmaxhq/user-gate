@@ -1,7 +1,15 @@
 /* jshint esnext:true */
-/* global require:false */
+
+// Make `jasmine-promises` compatible with Node:
+// https://github.com/matthewjh/jasmine-promises/issues/8#issue-135438525
+if (!global.jasmineRequire) {
+  global.jasmineRequire = {
+    interface: function() {}
+  };
+}
 require('jasmine-promises');
-var UserGate = require('../../src/browser');
+
+var UserGate = require('../../src/gate');
 
 describe('UserGate', function() {
   it('does not match if neither `userList` nor `userSample` are specified', function() {

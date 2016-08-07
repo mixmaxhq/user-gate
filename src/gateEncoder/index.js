@@ -2,13 +2,13 @@ var crypto = require('crypto');
 var es = require('event-stream');
 var JSONStream = require('JSONStream');
 
-function UserGate(options) {
+function UserGateEncoder(options) {
   options = options || {};
   this._userList = options.userList || [];
   this._userSample = options.userSample || 0;
 }
 
-Object.assign(UserGate.prototype, {
+Object.assign(UserGateEncoder.prototype, {
   toJSON: function() {
     return {
       userList: this._userList.map(encodeUser),
@@ -47,4 +47,4 @@ function encodeUser(user) {
   return crypto.createHash('sha256').update(user).digest('base64');
 }
 
-module.exports = UserGate;
+module.exports = UserGateEncoder;

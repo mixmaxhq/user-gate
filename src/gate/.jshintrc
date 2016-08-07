@@ -4,11 +4,12 @@
 
   "extends": "../../.jshintrc",
 
-  // Make JSHint aware of browser globals.
+  // Make JSHint aware of Node and browser globals.
+  "node": true,
   "browser": true,
 
   "globals": {
-    "crypto": false,
+    // For some reason `Promise` isn't in either of the above sets.
     "Promise": false
   }
 }

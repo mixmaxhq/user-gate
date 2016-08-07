@@ -6,7 +6,7 @@
       "dist"
     ],
     "file_exclude_patterns": [
-      "spec/browser/spec.bundle.js"
+      "spec/gate/spec.bundle.js"
     ]
   }],
   "settings": {
