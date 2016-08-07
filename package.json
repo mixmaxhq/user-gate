@@ -2,6 +2,7 @@
   "name": "user-gate",
   "version": "1.0.0",
   "description": "",
+  "bin": "bin/user-gate.js",
   "main": "src/index.js",
   "scripts": {
     "test": "jasmine",
@@ -31,7 +32,8 @@
     "webpack": "^1.13.1"
   },
   "dependencies": {
+    "JSONStream": "^1.1.4",
     "event-stream": "^3.3.4",
-    "JSONStream": "^1.1.4"
+    "yargs": "^4.8.1"
   }
 }
