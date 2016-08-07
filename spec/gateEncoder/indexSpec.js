@@ -11,16 +11,16 @@ describe('UserGateEncoder', function() {
 
   it('should work', function(done) {
     expect(new UserGateEncoder({
-      userList: ['jeff@mixmax.com'],
-      userSample: 0.25
+      list: ['jeff@mixmax.com'],
+      sample: 0.25
     }).toJSON()).toEqual({
-      userList: ['vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU='],
-      userSample: 0.25
+      list: ['vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU='],
+      sample: 0.25
     });
 
     var gate = new UserGateEncoder({
-      userList: ['jeff@mixmax.com'],
-      userSample: 0.25
+      list: ['jeff@mixmax.com'],
+      sample: 0.25
     });
 
     // Explicitly end the stream since we're not going to write any additional users to it.
@@ -30,30 +30,30 @@ describe('UserGateEncoder', function() {
           done.fail(err);
         } else {
           expect(JSON.parse(jsonString)).toEqual(({
-            userList: [
+            list: [
               'vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU='
             ],
-            userSample: 0.25
+            sample: 0.25
           }));
           done();
         }
       }));
   });
 
-  describe('userList', function() {
+  describe('list', function() {
     it('should encode the specified user', function() {
       expect(new UserGateEncoder({
-        userList: ['jeff@mixmax.com']
+        list: ['jeff@mixmax.com']
       }).toJSON()).toEqual(jasmine.objectContaining({
-        userList: ['vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU=']
+        list: ['vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU=']
       }));
     });
 
     it('should encode multiple users', function() {
       expect(new UserGateEncoder({
-        userList: ['jeff@mixmax.com', 'bar@mixmax.com']
+        list: ['jeff@mixmax.com', 'bar@mixmax.com']
       }).toJSON()).toEqual(jasmine.objectContaining({
-        userList: [
+        list: [
           'vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU=',
           'QQVkG1DSbHvP7amX9oSdmi3l+CI/ivz9lrEFyMX91gI='
         ]
@@ -61,15 +61,15 @@ describe('UserGateEncoder', function() {
     });
 
     it('should default to zero users', function() {
-      expect(new UserGateEncoder({ userList: [] }).toJSON()).toEqual(jasmine.objectContaining({ userList: [] }));
-      expect(new UserGateEncoder({}).toJSON()).toEqual(jasmine.objectContaining({ userList: [] }));
-      expect(new UserGateEncoder().toJSON()).toEqual(jasmine.objectContaining({ userList: [] }));
+      expect(new UserGateEncoder({ list: [] }).toJSON()).toEqual(jasmine.objectContaining({ list: [] }));
+      expect(new UserGateEncoder({}).toJSON()).toEqual(jasmine.objectContaining({ list: [] }));
+      expect(new UserGateEncoder().toJSON()).toEqual(jasmine.objectContaining({ list: [] }));
     });
 
     describe('streaming', function() {
       it('should handle writing an empty array to the stream', function(done) {
         var gate = new UserGateEncoder({
-          userList: []
+          list: []
         });
 
         // Explicitly end the stream since we're not going to write any additional users to it.
@@ -78,7 +78,7 @@ describe('UserGateEncoder', function() {
             if (err) {
               done.fail(err);
             } else {
-              expect(JSON.parse(jsonString)).toEqual(jasmine.objectContaining({ userList: [] }));
+              expect(JSON.parse(jsonString)).toEqual(jasmine.objectContaining({ list: [] }));
               done();
             }
           }));
@@ -86,7 +86,7 @@ describe('UserGateEncoder', function() {
 
       it('should write JSON stringification to stream', function(done) {
         var gate = new UserGateEncoder({
-          userList: ['jeff@mixmax.com', 'bar@mixmax.com']
+          list: ['jeff@mixmax.com', 'bar@mixmax.com']
         });
 
         // Explicitly end the stream since we're not going to write any additional users to it.
@@ -96,7 +96,7 @@ describe('UserGateEncoder', function() {
               done.fail(err);
             } else {
               expect(JSON.parse(jsonString)).toEqual(jasmine.objectContaining({
-                userList: [
+                list: [
                   'vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU=',
                   'QQVkG1DSbHvP7amX9oSdmi3l+CI/ivz9lrEFyMX91gI='
                 ]
@@ -121,7 +121,7 @@ describe('UserGateEncoder', function() {
               done.fail(err);
             } else {
               expect(JSON.parse(jsonString)).toEqual(jasmine.objectContaining({
-                userList: [
+                list: [
                   'vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU=',
                   'QQVkG1DSbHvP7amX9oSdmi3l+CI/ivz9lrEFyMX91gI='
                 ]
@@ -137,7 +137,7 @@ describe('UserGateEncoder', function() {
         });
 
         var gate = new UserGateEncoder({
-          userList: ['jeff@mixmax.com']
+          list: ['jeff@mixmax.com']
         });
 
         fs.createReadStream('users.json', 'utf8')
@@ -148,7 +148,7 @@ describe('UserGateEncoder', function() {
               done.fail(err);
             } else {
               expect(JSON.parse(jsonString)).toEqual(jasmine.objectContaining({
-                userList: [
+                list: [
                   'vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU=',
                   'QQVkG1DSbHvP7amX9oSdmi3l+CI/ivz9lrEFyMX91gI='
                 ]
@@ -160,16 +160,16 @@ describe('UserGateEncoder', function() {
     });
   });
 
-  describe('userSample', function() {
+  describe('sample', function() {
     it('should default to 0', function() {
       expect(new UserGateEncoder().toJSON()).toEqual(jasmine.objectContaining({
-        userSample: 0
+        sample: 0
       }));
     });
 
     it('should preserve the specified number', function() {
-      expect(new UserGateEncoder({ userSample: 0.5 }).toJSON()).toEqual(jasmine.objectContaining({
-        userSample: 0.5
+      expect(new UserGateEncoder({ sample: 0.5 }).toJSON()).toEqual(jasmine.objectContaining({
+        sample: 0.5
       }));
     });
   });

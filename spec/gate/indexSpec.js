@@ -12,7 +12,7 @@ require('jasmine-promises');
 var UserGate = require('../../src/gate');
 
 describe('UserGate', function() {
-  it('does not match if neither `userList` nor `userSample` are specified', function() {
+  it('does not match if neither `list` nor `sample` are specified', function() {
     return Promise.all([
       new UserGate().matches('jeff@mixmax.com'),
       new UserGate({}).matches('jeff@mixmax.com')
@@ -21,10 +21,10 @@ describe('UserGate', function() {
     });
   });
 
-  describe('userList', function() {
+  describe('list', function() {
     it('matches the specified user', function() {
       var gate = new UserGate({
-        userList: ['vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU=']
+        list: ['vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU=']
       });
 
       return Promise.all([
@@ -37,7 +37,7 @@ describe('UserGate', function() {
 
     it('matches multiple users', function() {
       var gate = new UserGate({
-        userList: [
+        list: [
           'vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU=',
           'QQVkG1DSbHvP7amX9oSdmi3l+CI/ivz9lrEFyMX91gI='
         ]
@@ -52,10 +52,10 @@ describe('UserGate', function() {
     });
   });
 
-  describe('userSample', function() {
+  describe('sample', function() {
     it('works', function() {
       var gate = new UserGate({
-        userSample: 0.5
+        sample: 0.5
       });
 
       return Promise.all([
@@ -71,11 +71,11 @@ describe('UserGate', function() {
 
   describe('both', function() {
     var gate = new UserGate({
-      userList: [
+      list: [
         'vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU=',
         'QQVkG1DSbHvP7amX9oSdmi3l+CI/ivz9lrEFyMX91gI='
       ],
-      userSample: 0.25
+      sample: 0.25
     });
 
     it('works if user matches list and not sample', function() {

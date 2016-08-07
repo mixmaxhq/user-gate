@@ -14,8 +14,8 @@ if (IS_BROWSER) {
 function UserGate(options) {
   options = options || {};
 
-  this._userList = options.userList;
-  this._userSample = options.userSample;
+  this._list = options.list;
+  this._sample = options.sample;
 
   this._userCharacterSet = options.userCharacterSet || 'abcdefghijklmnopqrstuvwxyz';
 }
@@ -41,7 +41,7 @@ Object.assign(UserGate.prototype, {
     var self = this;
 
     return new Promise(function(resolve, reject) {
-      if (!self._userList) {
+      if (!self._list) {
         resolve(false);
         return;
       }
@@ -63,7 +63,7 @@ Object.assign(UserGate.prototype, {
           }
         })
         .then(function(base64User) {
-          var anyUserMatches = self._userList.indexOf(base64User) > -1;
+          var anyUserMatches = self._list.indexOf(base64User) > -1;
           resolve(anyUserMatches);
         })
         .catch(reject);
@@ -74,14 +74,14 @@ Object.assign(UserGate.prototype, {
     var self = this;
 
     return new Promise(function(resolve) {
-      if (!self._userSample) {
+      if (!self._sample) {
         resolve(false);
         return;
       }
 
       // See if the user begins with a character in the sample set.
       var effectiveCharacterSet = self._userCharacterSet.slice(
-        0, Math.round(self._userCharacterSet.length * self._userSample));
+        0, Math.round(self._userCharacterSet.length * self._sample));
 
       var userMatches = new RegExp('^[' + effectiveCharacterSet + ']').test(user);
       resolve(userMatches);

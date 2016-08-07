@@ -4,15 +4,15 @@ var JSONStream = require('JSONStream');
 
 function UserGateEncoder(options) {
   options = options || {};
-  this._userList = options.userList || [];
-  this._userSample = options.userSample || 0;
+  this._list = options.list || [];
+  this._sample = options.sample || 0;
 }
 
 Object.assign(UserGateEncoder.prototype, {
   toJSON: function() {
     return {
-      userList: this._userList.map(encodeUser),
-      userSample: this._userSample
+      list: this._list.map(encodeUser),
+      sample: this._sample
     };
   },
 
@@ -24,9 +24,9 @@ Object.assign(UserGateEncoder.prototype, {
 
     // Mimic the structure returned by `toJSON`. `JSONStream.stringify` will inject
     // new elements in the middle.
-    var op = '{"userList":[',
+    var op = '{"list":[',
         sep = ',',
-        cl = `],"userSample":${this._userSample}}`;
+        cl = `],"sample":${this._sample}}`;
 
     // `es.pipeline` pipes these streams together but causes writes to go to the first
     // stream and reads to come from the last, whereas if we just returned the result of
@@ -37,7 +37,7 @@ Object.assign(UserGateEncoder.prototype, {
     );
 
     // Inject the initial users.
-    es.readArray(this._userList).pipe(pipeline, { end: endStream });
+    es.readArray(this._list).pipe(pipeline, { end: endStream });
 
     return pipeline;
   }
