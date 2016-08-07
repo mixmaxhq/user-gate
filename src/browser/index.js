@@ -5,19 +5,19 @@ function UserGate(options) {
 }
 
 Object.assign(UserGate.prototype, {
-  matches: function(identifier) {
-    return this._matchesList(identifier);
+  matches: function(user) {
+    return this._matchesList(user);
   },
 
-  _matchesList: function(identifier) {
+  _matchesList: function(user) {
     var self = this;
     return new Promise(function(resolve, reject) {
-      var buffer = new TextEncoder('utf-8').encode(identifier);
+      var buffer = new TextEncoder('utf-8').encode(user);
       crypto.subtle.digest('SHA-256', buffer)
         .then(function(hash) {
-          var base64Identifier = arrayBufferToBase64(hash);
-          var anyIdentifierMatches = self._userList.indexOf(base64Identifier) > -1;
-          resolve(anyIdentifierMatches);
+          var base64User = arrayBufferToBase64(hash);
+          var anyUserMatches = self._userList.indexOf(base64User) > -1;
+          resolve(anyUserMatches);
         })
         // Can this fail? https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest does not say.
         .catch(reject);

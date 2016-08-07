@@ -14,7 +14,7 @@ describe('UserGate', function() {
   });
 
   describe('matches', function() {
-    it('matches the specified identifier', function() {
+    it('matches the specified user', function() {
       var gate = new UserGate({
         userList: ['vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU=']
       });
@@ -27,7 +27,7 @@ describe('UserGate', function() {
       });
     });
 
-    it('matches multiple identifiers', function() {
+    it('matches multiple users', function() {
       var gate = new UserGate({
         userList: [
           'vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU=',
