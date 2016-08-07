@@ -1,3 +1,6 @@
+/* global require:false, module:false */
+var arrayBufferToBase64 = require('./arrayBufferToBase64');
+
 function UserGate(options) {
   if (!options.userList) throw new Error('`userList` is required.');
 
@@ -25,15 +28,4 @@ Object.assign(UserGate.prototype, {
   }
 });
 
-// http://stackoverflow.com/a/9458996/495611
-function arrayBufferToBase64(buffer) {
-  var binary = '';
-  var bytes = new Uint8Array(buffer);
-  for (var i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
-}
-
-/* global module:false */
 module.exports = UserGate;
