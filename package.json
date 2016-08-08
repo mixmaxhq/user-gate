@@ -1,7 +1,7 @@
 {
   "name": "user-gate",
   "version": "1.0.0",
-  "description": "Server-less feature gates that protect your users' privacy.",
+  "description": "Server-less feature gates that don't compromise users' privacy.",
   "bin": "bin/user-gate.js",
   "main": "src/index.js",
   "scripts": {
