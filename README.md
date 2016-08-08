@@ -61,7 +61,7 @@ Let's say that you have a list of users like
 
 (These could be any sort of strings, emails or user IDs or whatever.)
 
-You can this list using `user-gate`'s Node API or using the CLI tool. Using the
+You can encode this list using `user-gate`'s Node API or using the CLI tool. Using the
 Node API:
 
 ```js
