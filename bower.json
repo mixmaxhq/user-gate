@@ -1,7 +1,6 @@
 {
   "name": "user-gate",
-  "description": "Server-less feature gates that don't compromise
-users' privacy.",
+  "description": "Server-less feature gates that don't compromise users' privacy.",
   "main": "./dist/bundle.js",
   "authors": [
     "Jeff Wear <jeff@mixmax.com> (https://mixmax.com)"
