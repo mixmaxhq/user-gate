@@ -12,12 +12,12 @@ require('jasmine-promises');
 var UserGate = require('../../src/gate');
 
 describe('UserGate', function() {
-  it('does not match if neither `list` nor `sample` are specified', function() {
+  it('does not allow if neither `list` nor `sample` are specified', function() {
     return Promise.all([
-      new UserGate().matches('jeff@mixmax.com'),
-      new UserGate({}).matches('jeff@mixmax.com')
-    ]).then(function(matches) {
-      expect(matches.every((match) => !!match)).toBe(false);
+      new UserGate().allows('jeff@mixmax.com'),
+      new UserGate({}).allows('jeff@mixmax.com')
+    ]).then(function(allowed) {
+      expect(allowed).toEqual([false, false]);
     });
   });
 
@@ -28,10 +28,10 @@ describe('UserGate', function() {
       });
 
       return Promise.all([
-        gate.matches('jeff@mixmax.com'),
-        gate.matches('bar@mixmax.com')
-      ]).then(function(matches) {
-        expect(matches).toEqual([true, false]);
+        gate.allows('jeff@mixmax.com'),
+        gate.allows('bar@mixmax.com')
+      ]).then(function(allowed) {
+        expect(allowed).toEqual([true, false]);
       });
     });
 
@@ -44,10 +44,10 @@ describe('UserGate', function() {
       });
 
       return Promise.all([
-        gate.matches('jeff@mixmax.com'),
-        gate.matches('bar@mixmax.com')
-      ]).then(function(matches) {
-        expect(matches).toEqual([true, true]);
+        gate.allows('jeff@mixmax.com'),
+        gate.allows('bar@mixmax.com')
+      ]).then(function(allowed) {
+        expect(allowed).toEqual([true, true]);
       });
     });
   });
@@ -59,12 +59,12 @@ describe('UserGate', function() {
       });
 
       return Promise.all([
-        gate.matches('alice@mixmax.com'),
-        gate.matches('fred@mixmax.com'),
-        gate.matches('tom@mixmax.com'),
-        gate.matches('zaina@mixmax.com')
-      ]).then(function(matches) {
-        expect(matches).toEqual([true, true, false, false]);
+        gate.allows('alice@mixmax.com'),
+        gate.allows('fred@mixmax.com'),
+        gate.allows('tom@mixmax.com'),
+        gate.allows('zaina@mixmax.com')
+      ]).then(function(allowed) {
+        expect(allowed).toEqual([true, true, false, false]);
       });
     });
 
@@ -74,10 +74,10 @@ describe('UserGate', function() {
       });
 
       return Promise.all([
-        gate.matches('alice@mixmax.com'),
-        gate.matches('Alice@mixmax.com')
-      ]).then(function(matches) {
-        expect(matches).toEqual([true, true]);
+        gate.allows('alice@mixmax.com'),
+        gate.allows('Alice@mixmax.com')
+      ]).then(function(allowed) {
+        expect(allowed).toEqual([true, true]);
       });
     });
 
@@ -93,12 +93,12 @@ describe('UserGate', function() {
       });
 
       return Promise.all([
-        defaultGate.matches('1'),
-        defaultGate.matches('2'),
-        numberGate.matches('1'),
-        numberGate.matches('2')
-      ]).then(function(matches) {
-        expect(matches).toEqual([false, false, true, false]);
+        defaultGate.allows('1'),
+        defaultGate.allows('2'),
+        numberGate.allows('1'),
+        numberGate.allows('2')
+      ]).then(function(allowed) {
+        expect(allowed).toEqual([false, false, true, false]);
       });
     });
   });
@@ -113,30 +113,30 @@ describe('UserGate', function() {
     });
 
     it('works if user matches list and not sample', function() {
-      return gate.matches('jeff@mixmax.com')
-        .then(function(matches) {
-          expect(matches).toBe(true);
+      return gate.allows('jeff@mixmax.com')
+        .then(function(allowed) {
+          expect(allowed).toBe(true);
         });
     });
 
     it('works if user matches sample and not list', function() {
-      return gate.matches('alice@mixmax.com')
-        .then(function(matches) {
-          expect(matches).toBe(true);
+      return gate.allows('alice@mixmax.com')
+        .then(function(allowed) {
+          expect(allowed).toBe(true);
         });
     });
 
     it('works if user matches neither', function() {
-      return gate.matches('tom@mixmax.com')
-        .then(function(matches) {
-          expect(matches).toBe(false);
+      return gate.allows('tom@mixmax.com')
+        .then(function(allowed) {
+          expect(allowed).toBe(false);
         });
     });
 
     it('works if user matches both', function() {
-      return gate.matches('bar@mixmax.com')
-        .then(function(matches) {
-          expect(matches).toBe(true);
+      return gate.allows('bar@mixmax.com')
+        .then(function(allowed) {
+          expect(allowed).toBe(true);
         });
     });
   });

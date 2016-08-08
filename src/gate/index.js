@@ -21,7 +21,7 @@ function UserGate(criteria, options) {
 }
 
 Object.assign(UserGate.prototype, {
-  matches: function(user) {
+  allows: function(user) {
     var self = this;
 
     return new Promise(function(resolve, reject) {

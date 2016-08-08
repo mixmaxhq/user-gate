@@ -20,9 +20,9 @@ exports.handler = function(argv) {
     return;
   }
 
-  gate.matches(argv.user)
-    .then(function(matches) {
-      console.log(matches ? 'Allowed' : 'Not allowed');
+  gate.allows(argv.user)
+    .then(function(allowed) {
+      console.log(allowed ? 'Allowed' : 'Not allowed');
     })
     .catch(function(err) {
       console.error(err);
