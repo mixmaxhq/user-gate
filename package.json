@@ -6,8 +6,8 @@
   "main": "src/index.js",
   "scripts": {
     "test": "jasmine",
-    "build": "webpack src/gate/exports.js dist/bundle.js && webpack -pd src/gate/exports.js dist/bundle.min.js",
-    "build-test": "webpack --watch spec/gate/indexSpec.js spec/gate/spec.bundle.js",
+    "build": "webpack && NODE_ENV=production webpack",
+    "build-test": "NODE_ENV=test webpack --watch",
     "open-test": "open spec/gate/jasmine.html"
   },
   "repository": {
