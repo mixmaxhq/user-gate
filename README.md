@@ -271,7 +271,7 @@ Checking against the list requires an exact match. However, sampling is
 case-insensitive.
 
 Returns a [promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)
-that resolve to `true` if _user_ is allowed through the gate, `false` otherwise.
+that resolves to `true` if _user_ is allowed through the gate, `false` otherwise.
 
 ### CLI
 
