@@ -11,13 +11,13 @@ if (IS_BROWSER) {
   crypto = require('crypto');
 }
 
-function UserGate(options) {
+function UserGate(criteria, options) {
+  criteria = criteria || {};
+  this._list = criteria.list;
+  this._sample = criteria.sample;
+
   options = options || {};
-
-  this._list = options.list;
-  this._sample = options.sample;
-
-  this._userCharacterSet = options.userCharacterSet || 'abcdefghijklmnopqrstuvwxyz';
+  this._sampleCharacterSet = options.sampleCharacterSet || 'abcdefghijklmnopqrstuvwxyz';
 }
 
 Object.assign(UserGate.prototype, {
@@ -80,8 +80,8 @@ Object.assign(UserGate.prototype, {
       }
 
       // See if the user begins with a character in the sample set.
-      var effectiveCharacterSet = self._userCharacterSet.slice(
-        0, Math.round(self._userCharacterSet.length * self._sample));
+      var effectiveCharacterSet = self._sampleCharacterSet.slice(
+        0, Math.round(self._sampleCharacterSet.length * self._sample));
 
       var userMatches = new RegExp('^[' + effectiveCharacterSet + ']', 'i').test(user);
       resolve(userMatches);

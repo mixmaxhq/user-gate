@@ -80,6 +80,27 @@ describe('UserGate', function() {
         expect(matches).toEqual([true, true]);
       });
     });
+
+    it('allows the character set to be configured', function() {
+      var defaultGate = new UserGate({
+        sample: 0.5
+      });
+
+      var numberGate = new UserGate({
+        sample: 0.5,
+      }, {
+        sampleCharacterSet: '12'
+      });
+
+      return Promise.all([
+        defaultGate.matches('1'),
+        defaultGate.matches('2'),
+        numberGate.matches('1'),
+        numberGate.matches('2')
+      ]).then(function(matches) {
+        expect(matches).toEqual([false, false, true, false]);
+      });
+    });
   });
 
   describe('both', function() {
