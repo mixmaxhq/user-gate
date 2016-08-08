@@ -67,6 +67,19 @@ describe('UserGate', function() {
         expect(matches).toEqual([true, true, false, false]);
       });
     });
+
+    it('is case-insensitive', function() {
+      var gate = new UserGate({
+        sample: 0.5
+      });
+
+      return Promise.all([
+        gate.matches('alice@mixmax.com'),
+        gate.matches('Alice@mixmax.com')
+      ]).then(function(matches) {
+        expect(matches).toEqual([true, true]);
+      });
+    });
   });
 
   describe('both', function() {

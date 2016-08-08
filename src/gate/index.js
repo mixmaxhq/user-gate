@@ -83,7 +83,7 @@ Object.assign(UserGate.prototype, {
       var effectiveCharacterSet = self._userCharacterSet.slice(
         0, Math.round(self._userCharacterSet.length * self._sample));
 
-      var userMatches = new RegExp('^[' + effectiveCharacterSet + ']').test(user);
+      var userMatches = new RegExp('^[' + effectiveCharacterSet + ']', 'i').test(user);
       resolve(userMatches);
     });
   }
