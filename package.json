@@ -1,7 +1,7 @@
 {
   "name": "user-gate",
   "version": "1.0.0",
-  "description": "",
+  "description": "Server-less feature gates that protect your users' privacy.",
   "bin": "bin/user-gate.js",
   "main": "src/index.js",
   "scripts": {
@@ -17,7 +17,9 @@
   "keywords": [
     "feature",
     "user",
-    "gate"
+    "gate",
+    "server-less",
+    "private"
   ],
   "author": "Jeff Wear <jeff@mixmax.com> (https://mixmax.com)",
   "license": "MIT",
