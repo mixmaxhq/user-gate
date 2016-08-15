@@ -114,7 +114,8 @@ user-gate encode --list users.json --sample 0.5 gate.json
 In the browser:
 
 ```html
-<!-- Loads `UserGate` into `window`. See warning below about minified version.  -->
+<!-- Loads `UserGate` into `window`. There is also a minified version available, `dist/bundle.min.js`.
+If anyone would like to produce a UMD version, a pull request would be very welcome! -->
 <script src="bower_components/user-gate/dist/bundle.js"></script>
 
 <script type="text/javascript">
@@ -140,13 +141,6 @@ In the browser:
     });
 </script>
 ```
-
-> There is also a minified version available, `dist/bundle.min.js`, but
-if you want to use that make sure that you are sending the UTF-8 HTTP header from
-your server or have added `<meta charset="UTF-8">` to the page, or the formatter
-output will be garbled: https://github.com/webpack/webpack/issues/1035.
-
-> If anyone would like to produce a UMD version, a pull request would be very welcome!
 
 You can also check the list from Node:
 
