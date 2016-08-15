@@ -1,7 +1,5 @@
-var os = require('os');
-
-// Webpack adds a shim for `os.platform` that returns this value.
-var IS_BROWSER = os.platform() === 'browser';
+/* global IS_BROWSER:true */
+if (typeof IS_BROWSER === 'undefined') IS_BROWSER = false;
 
 var arrayBufferToBase64, crypto;
 if (IS_BROWSER) {
