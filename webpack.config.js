@@ -2,11 +2,11 @@
 var webpack = require('webpack');
 
 module.exports = {
-  externals: {
-    // Prevent Webpack from shimming Node's crypto module--`require('crypto')` is actually dead code
-    // when this module is loaded in the browser, and we use the browser's crypto module.
-    'crypto': 'crypto'
-  }
+  plugins: [
+    new webpack.DefinePlugin({
+      IS_BROWSER: true
+    })
+  ]
 };
 
 if (process.env.NODE_ENV === 'test') {
@@ -25,12 +25,12 @@ if (process.env.NODE_ENV === 'test') {
       output: {
         filename: './dist/bundle.min.js'
       },
-      plugins: [
+      plugins: (module.exports.plugins || []).concat([
         new webpack.optimize.UglifyJsPlugin({
           compress: { warnings: false }
         }),
         new webpack.optimize.OccurrenceOrderPlugin(true)
-      ]
+      ])
     });
   } else {
     Object.assign(module.exports, {

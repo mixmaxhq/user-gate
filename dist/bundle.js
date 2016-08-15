@@ -62,17 +62,15 @@
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var os = __webpack_require__(2);
-
-	// Webpack adds a shim for `os.platform` that returns this value.
-	var IS_BROWSER = os.platform() === 'browser';
+	/* global IS_BROWSER:true */
+	if (false) IS_BROWSER = false;
 
 	var arrayBufferToBase64, crypto;
-	if (IS_BROWSER) {
-	  arrayBufferToBase64 = __webpack_require__(3);
+	if (true) {
+	  arrayBufferToBase64 = __webpack_require__(2);
 	  crypto = window.crypto;
 	} else {
-	  crypto = __webpack_require__(4);
+	  crypto = require('crypto');
 	}
 
 	/**
@@ -147,7 +145,7 @@
 
 	      Promise.resolve()
 	        .then(function() {
-	          if (IS_BROWSER) {
+	          if (true) {
 	            var buffer = new TextEncoder('utf-8').encode(user);
 	            return crypto.subtle.digest('SHA-256', buffer);
 	          } else {
@@ -155,7 +153,7 @@
 	          }
 	        })
 	        .then(function(hash) {
-	          if (IS_BROWSER) {
+	          if (true) {
 	            return arrayBufferToBase64(hash);
 	          } else {
 	            return hash.digest('base64');
@@ -195,57 +193,6 @@
 /* 2 */
 /***/ function(module, exports) {
 
-	exports.endianness = function () { return 'LE' };
-
-	exports.hostname = function () {
-	    if (typeof location !== 'undefined') {
-	        return location.hostname
-	    }
-	    else return '';
-	};
-
-	exports.loadavg = function () { return [] };
-
-	exports.uptime = function () { return 0 };
-
-	exports.freemem = function () {
-	    return Number.MAX_VALUE;
-	};
-
-	exports.totalmem = function () {
-	    return Number.MAX_VALUE;
-	};
-
-	exports.cpus = function () { return [] };
-
-	exports.type = function () { return 'Browser' };
-
-	exports.release = function () {
-	    if (typeof navigator !== 'undefined') {
-	        return navigator.appVersion;
-	    }
-	    return '';
-	};
-
-	exports.networkInterfaces
-	= exports.getNetworkInterfaces
-	= function () { return {} };
-
-	exports.arch = function () { return 'javascript' };
-
-	exports.platform = function () { return 'browser' };
-
-	exports.tmpdir = exports.tmpDir = function () {
-	    return '/tmp';
-	};
-
-	exports.EOL = '\n';
-
-
-/***/ },
-/* 3 */
-/***/ function(module, exports) {
-
 	/* global module:false */
 
 	// http://stackoverflow.com/a/9458996/495611
@@ -260,12 +207,6 @@
 
 	module.exports = arrayBufferToBase64;
 
-
-/***/ },
-/* 4 */
-/***/ function(module, exports) {
-
-	module.exports = crypto;
 
 /***/ }
 /******/ ]);
