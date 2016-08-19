@@ -1,13 +1,4 @@
-/* global IS_BROWSER:true */
-if (typeof IS_BROWSER === 'undefined') IS_BROWSER = false;
-
-var arrayBufferToBase64, crypto;
-if (IS_BROWSER) {
-  arrayBufferToBase64 = require('./arrayBufferToBase64');
-  crypto = window.crypto;
-} else {
-  crypto = require('crypto');
-}
+var BloomFilter = require('bloom-filter-remixed');
 
 /**
  * Deserializes a user gate and checks users against the gate.
@@ -22,7 +13,11 @@ if (IS_BROWSER) {
  */
 function UserGate(encodedGate, options) {
   encodedGate = encodedGate || {};
-  this._list = encodedGate.list;
+
+  if (encodedGate.list) {
+    encodedGate.list.vData = new Buffer(encodedGate.list.vData.data);
+    this._list = new BloomFilter(encodedGate.list);
+  }
   this._sample = encodedGate.sample;
 
   options = options || {};
@@ -52,73 +47,28 @@ Object.assign(UserGate.prototype, {
    *
    * @param {String} user
    *
-   * @return {Promise} Resolves to `true` if _user_ is allowed through the gate, `false` otherwise.
+   * @return {Boolean} `true` if _user_ is allowed through the gate, `false` otherwise.
    */
   allows: function(user) {
-    var self = this;
-
-    return new Promise(function(resolve, reject) {
-      // We would ideally race *for the first promise to resolve to `true`*, but I can't think of
-      // how to do that elegantly.
-      Promise.all([ self._matchesList(user), self._matchesSample(user) ])
-        .then(function(matches) {
-          resolve(matches.some(function(match) {
-            return match;
-          }));
-        })
-        .catch(reject);
-    });
+    // Micro-optimization: check `_matchesSample` first because it's faster.
+    return this._matchesSample(user) || this._matchesList(user);
   },
 
   _matchesList: function(user) {
-    var self = this;
+    if (!this._list) return false;
 
-    return new Promise(function(resolve, reject) {
-      if (!self._list) {
-        resolve(false);
-        return;
-      }
-
-      Promise.resolve()
-        .then(function() {
-          if (IS_BROWSER) {
-            var buffer = new TextEncoder('utf-8').encode(user);
-            return crypto.subtle.digest('SHA-256', buffer);
-          } else {
-            return crypto.createHash('sha256').update(user);
-          }
-        })
-        .then(function(hash) {
-          if (IS_BROWSER) {
-            return arrayBufferToBase64(hash);
-          } else {
-            return hash.digest('base64');
-          }
-        })
-        .then(function(base64User) {
-          var anyUserMatches = self._list.indexOf(base64User) > -1;
-          resolve(anyUserMatches);
-        })
-        .catch(reject);
-    });
+    return this._list.contains(user);
   },
 
   _matchesSample: function(user) {
-    var self = this;
+    if (!this._sample) return false;
 
-    return new Promise(function(resolve) {
-      if (!self._sample) {
-        resolve(false);
-        return;
-      }
+    // See if the user begins with a character in the sample set.
+    var effectiveCharacterSet = this._sampleCharacterSet.slice(
+      0, Math.round(this._sampleCharacterSet.length * this._sample));
 
-      // See if the user begins with a character in the sample set.
-      var effectiveCharacterSet = self._sampleCharacterSet.slice(
-        0, Math.round(self._sampleCharacterSet.length * self._sample));
-
-      var userMatches = new RegExp('^[' + effectiveCharacterSet + ']', 'i').test(user);
-      resolve(userMatches);
-    });
+    var userMatches = new RegExp('^[' + effectiveCharacterSet + ']', 'i').test(user);
+    return userMatches;
   }
 });
 

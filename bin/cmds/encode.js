@@ -1,3 +1,4 @@
+var assert = require('assert');
 var fs = require('fs');
 var JSONStream = require('JSONStream');
 var UserGateEncoder = require('../../src').encoder;
@@ -12,6 +13,10 @@ exports.builder = function(yargs) {
       list: {
         describe: 'The path to a file specifying users to encode, as a JSON array.'
       },
+      'list-size': {
+        describe: 'The estimated size of the list.',
+        type: 'number'
+      },
       sample: {
         describe: 'The proportion of users to allow independent of the list.',
         default: 0,
@@ -20,11 +25,11 @@ exports.builder = function(yargs) {
     })
     .example('$0 encode gate.json',
       'Encodes a gate that disallows all users.')
-    .example('$0 encode --list users.json gate.json',
-      'Encodes a gate that allows the specified users.')
+    .example('$0 encode --list users.json --list-size 1000 gate.json',
+      'Encodes a gate that allows the specified ~1000 users.')
     .example('$0 encode --sample 0.5 gate.json',
       'Encodes a gate that allows half of users.')
-    .example('$0 encode --list users.json --sample 0.5 gate.json',
+    .example('$0 encode --list users.json --list-size 1000 --sample 0.5 gate.json',
       'Encodes a gate that allows a user if they\'re on the list or in the first half of users.');
 };
 
@@ -34,7 +39,11 @@ exports.handler = function(argv) {
   });
 
   var listFile = argv.list;
-  var encoderStream = gateEncoder.toStream({ end: !listFile });
+  var listSize = argv['list-size'];
+  if (listFile) {
+    assert(listSize, `You must specify the estimated size of "${listFile}" using --list-size.`);
+  }
+  var encoderStream = gateEncoder.toStream({ numUsers: listSize, end: !listFile });
 
   if (listFile) {
     fs.createReadStream(listFile, 'utf8')
