@@ -20,11 +20,5 @@ exports.handler = function(argv) {
     return;
   }
 
-  gate.allows(argv.user)
-    .then(function(allowed) {
-      console.log(allowed ? 'Allowed' : 'Not allowed');
-    })
-    .catch(function(err) {
-      console.error(err);
-    });
+  console.log(gate.allows(argv.user) ? 'Allowed' : 'Not allowed');
 };

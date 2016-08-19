@@ -14,7 +14,7 @@ describe('UserGateEncoder', function() {
       list: ['jeff@mixmax.com'],
       sample: 0.25
     }).toJSON()).toEqual({
-      list: ['vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU='],
+      list: { vData: { type: 'Buffer', data: [ 113 ] }, nHashFuncs: 5, nTweak: 0, nFlags: 0 },
       sample: 0.25
     });
 
@@ -30,9 +30,7 @@ describe('UserGateEncoder', function() {
           done.fail(err);
         } else {
           expect(JSON.parse(jsonString)).toEqual(({
-            list: [
-              'vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU='
-            ],
+            list: { vData: { type: 'Buffer', data: [ 113 ] }, nHashFuncs: 5, nTweak: 0, nFlags: 0 },
             sample: 0.25
           }));
           done();
@@ -41,11 +39,13 @@ describe('UserGateEncoder', function() {
   });
 
   describe('list', function() {
+    var emptyList = { vData: Object({ type: 'Buffer', data: [ 0 ] }), nHashFuncs: 5, nTweak: 0, nFlags: 0 };
+
     it('should encode the specified user', function() {
       expect(new UserGateEncoder({
         list: ['jeff@mixmax.com']
       }).toJSON()).toEqual(jasmine.objectContaining({
-        list: ['vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU=']
+        list: { vData: { type: 'Buffer', data: [ 113 ] }, nHashFuncs: 5, nTweak: 0, nFlags: 0 },
       }));
     });
 
@@ -53,17 +53,14 @@ describe('UserGateEncoder', function() {
       expect(new UserGateEncoder({
         list: ['jeff@mixmax.com', 'bar@mixmax.com']
       }).toJSON()).toEqual(jasmine.objectContaining({
-        list: [
-          'vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU=',
-          'QQVkG1DSbHvP7amX9oSdmi3l+CI/ivz9lrEFyMX91gI='
-        ]
+        list: { vData: { type: 'Buffer', data: [ 121, 48 ] }, nHashFuncs: 5, nTweak: 0, nFlags: 0 }
       }));
     });
 
     it('should default to zero users', function() {
-      expect(new UserGateEncoder({ list: [] }).toJSON()).toEqual(jasmine.objectContaining({ list: [] }));
-      expect(new UserGateEncoder({}).toJSON()).toEqual(jasmine.objectContaining({ list: [] }));
-      expect(new UserGateEncoder().toJSON()).toEqual(jasmine.objectContaining({ list: [] }));
+      expect(new UserGateEncoder({ list: [] }).toJSON()).toEqual(jasmine.objectContaining({ list: emptyList }));
+      expect(new UserGateEncoder({}).toJSON()).toEqual(jasmine.objectContaining({ list: emptyList }));
+      expect(new UserGateEncoder().toJSON()).toEqual(jasmine.objectContaining({ list: emptyList }));
     });
 
     describe('streaming', function() {
@@ -78,7 +75,7 @@ describe('UserGateEncoder', function() {
             if (err) {
               done.fail(err);
             } else {
-              expect(JSON.parse(jsonString)).toEqual(jasmine.objectContaining({ list: [] }));
+              expect(JSON.parse(jsonString)).toEqual(jasmine.objectContaining({ list: emptyList }));
               done();
             }
           }));
@@ -96,10 +93,7 @@ describe('UserGateEncoder', function() {
               done.fail(err);
             } else {
               expect(JSON.parse(jsonString)).toEqual(jasmine.objectContaining({
-                list: [
-                  'vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU=',
-                  'QQVkG1DSbHvP7amX9oSdmi3l+CI/ivz9lrEFyMX91gI='
-                ]
+                list: { vData: { type: 'Buffer', data: [ 121, 48 ] }, nHashFuncs: 5, nTweak: 0, nFlags: 0 }
               }));
               done();
             }
@@ -115,16 +109,13 @@ describe('UserGateEncoder', function() {
 
         fs.createReadStream('users.json', 'utf8')
           .pipe(JSONStream.parse('*'))
-          .pipe(gate.toStream())
+          .pipe(gate.toStream({ numUsers: 2 }))
           .pipe(es.wait(function(err, jsonString) {
             if (err) {
               done.fail(err);
             } else {
               expect(JSON.parse(jsonString)).toEqual(jasmine.objectContaining({
-                list: [
-                  'vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU=',
-                  'QQVkG1DSbHvP7amX9oSdmi3l+CI/ivz9lrEFyMX91gI='
-                ]
+                list: { vData: { type: 'Buffer', data: [ 121, 48 ] }, nHashFuncs: 5, nTweak: 0, nFlags: 0 }
               }));
               done();
             }
@@ -142,16 +133,13 @@ describe('UserGateEncoder', function() {
 
         fs.createReadStream('users.json', 'utf8')
           .pipe(JSONStream.parse('*'))
-          .pipe(gate.toStream())
+          .pipe(gate.toStream({ numUsers: 1 }))
           .pipe(es.wait(function(err, jsonString) {
             if (err) {
               done.fail(err);
             } else {
               expect(JSON.parse(jsonString)).toEqual(jasmine.objectContaining({
-                list: [
-                  'vm94x1WIA09ozQJA9VwuD1enx8ZncM8v5ztE04zGSDU=',
-                  'QQVkG1DSbHvP7amX9oSdmi3l+CI/ivz9lrEFyMX91gI='
-                ]
+                list: { vData: { type: 'Buffer', data: [ 121, 48 ] }, nHashFuncs: 5, nTweak: 0, nFlags: 0 }
               }));
               done();
             }

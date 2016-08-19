@@ -29,12 +29,12 @@
   "homepage": "https://github.com/mixmaxhq/user-gate#readme",
   "devDependencies": {
     "jasmine": "^2.4.1",
-    "jasmine-promises": "^0.4.1",
     "mock-fs": "^3.11.0",
     "webpack": "^1.13.1"
   },
   "dependencies": {
     "JSONStream": "^1.1.4",
+    "bloom-filter-remixed": "semaj/bloom-filter#c4c4c56da274053124c137e03d29700f8cc52d1e",
     "event-stream": "^3.3.4",
     "yargs": "^4.8.1"
   }

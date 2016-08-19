@@ -1,14 +1,6 @@
 /* jshint node:true, esnext:true */
 var webpack = require('webpack');
 
-module.exports = {
-  plugins: [
-    new webpack.DefinePlugin({
-      IS_BROWSER: true
-    })
-  ]
-};
-
 if (process.env.NODE_ENV === 'test') {
   Object.assign(module.exports, {
     entry: './spec/gate/indexSpec.js',
