@@ -384,6 +384,7 @@ page to re-run the tests.
 
 ## Release History
 
+* 2.0.1 Support strict mode environments
 * 2.0.0 Switch to encoding users using Bloom filters. [More details.](#user-encoding-scheme)
 * 1.0.2 Simplify usage by removing unnecessary warning from README (no code changes).
 * 1.0.1 Smaller browser bundle.
