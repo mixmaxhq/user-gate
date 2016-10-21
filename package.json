@@ -6,8 +6,8 @@
   "main": "src/index.js",
   "scripts": {
     "test": "jasmine",
-    "build": "webpack && NODE_ENV=production webpack",
-    "build-test": "NODE_ENV=test webpack --watch",
+    "build": "browserify src/gate/exports.js -o dist/bundle.js && browserify src/gate/exports.js -o dist/bundle.min.js -g uglifyify --debug",
+    "build-test": "watchify spec/gate/indexSpec.js -o spec/gate/spec.bundle.js",
     "open-test": "open spec/gate/jasmine.html"
   },
   "repository": {
@@ -28,9 +28,11 @@
   },
   "homepage": "https://github.com/mixmaxhq/user-gate#readme",
   "devDependencies": {
+    "browserify": "^13.1.0",
     "jasmine": "^2.4.1",
     "mock-fs": "^3.11.0",
-    "webpack": "^1.13.1"
+    "uglifyify": "^3.0.4",
+    "watchify": "^3.7.0"
   },
   "dependencies": {
     "JSONStream": "^1.1.4",
