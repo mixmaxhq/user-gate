@@ -31,3 +31,5 @@ node_modules
 *.sublime-workspace
 
 spec/gate/spec.bundle.js
+
+dist

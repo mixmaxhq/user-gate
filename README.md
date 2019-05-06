@@ -40,10 +40,7 @@ npm install user-gate -g
 For checking the list:
 
 ```sh
-# In the browser:
-bower install user-gate --save
-
-# From Node:
+# From both Node and the browser:
 npm install user-gate --save
 
 # Using the CLI tool:
@@ -124,7 +121,7 @@ In the browser:
 ```html
 <!-- Loads `UserGate` into `window`. There is also a minified version available, `dist/bundle.min.js`.
 If anyone would like to produce a UMD version, a pull request would be very welcome! -->
-<script src="bower_components/user-gate/dist/bundle.js"></script>
+<script src="node_modules/user-gate/dist/bundle.js"></script>
 
 <script type="text/javascript">
   // Assuming that you have jQuery for the purposes of this example.

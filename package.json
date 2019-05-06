@@ -3,6 +3,11 @@
   "version": "2.0.1",
   "description": "Server-less feature gates that don't compromise users' privacy.",
   "bin": "bin/user-gate.js",
+  "browser": "dist/bundle.min.js",
+  "files": [
+    "dist",
+    "src"
+  ],
   "main": "src/index.js",
   "scripts": {
     "test": "jasmine",
