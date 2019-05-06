@@ -1,5 +1,5 @@
 const BloomFilter = require('bloom-filter-remixed');
-const sha256 = require('sha.js/sha256')
+const sha256 = require('sha.js/sha256');
 
 const MAX_UINT_32 = Math.pow(2, 32);
 
@@ -84,8 +84,8 @@ Object.assign(UserGate.prototype, {
     // We've got to project `user` onto the sample space (i.e. convert it to a number between 0 and
     // 1) in a way that is a) deterministic b) uniform. We do this by hashing the user, converting it
     // to an unsigned 32-bit integer, and then normalizing by the size of the max UInt32--essentially
-    // this solution https://stats.stackexchange.com/a/70884 but with only two buckets ("in trial",
-    // or "not in trial").
+    // this solution https://stats.stackexchange.com/a/70884 but with only two buckets ("matches",
+    // or "doesn't match").
     const hash = new sha256();
     const buf = hash.update(user).digest();
 
