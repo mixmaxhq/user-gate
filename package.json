@@ -30,7 +30,7 @@
   "devDependencies": {
     "browserify": "^13.1.0",
     "jasmine": "^2.4.1",
-    "mock-fs": "^3.11.0",
+    "mock-fs": "4.9.0",
     "uglifyify": "^3.0.4",
     "watchify": "^3.7.0"
   },
@@ -38,6 +38,7 @@
     "JSONStream": "^1.1.4",
     "bloom-filter-remixed": "semaj/bloom-filter#c4c4c56da274053124c137e03d29700f8cc52d1e",
     "event-stream": "^3.3.4",
+    "sha.js": "^2.4.11",
     "yargs": "^4.8.1"
   }
 }

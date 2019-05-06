@@ -1,4 +1,7 @@
-var BloomFilter = require('bloom-filter-remixed');
+const BloomFilter = require('bloom-filter-remixed');
+const sha256 = require('sha.js/sha256')
+
+const MAX_UINT_32 = Math.pow(2, 32);
 
 /**
  * Deserializes a user gate and checks users against the gate.
@@ -54,6 +57,10 @@ Object.assign(UserGate.prototype, {
     return this._matchesSample(user) || this._matchesList(user);
   },
 
+  allowsUniform: function(user) {
+    return (this._matchesUniformSample(user) || this._matchesList(user));
+  },
+
   _matchesList: function(user) {
     if (!this._list) return false;
 
@@ -61,14 +68,35 @@ Object.assign(UserGate.prototype, {
   },
 
   _matchesSample: function(user) {
-    if (!this._sample) return false;
+    if (!this._sample || !((this._sample >= 0) && (this._sample <= 1))) return false;
 
     // See if the user begins with a character in the sample set.
-    var effectiveCharacterSet = this._sampleCharacterSet.slice(
+    const effectiveCharacterSet = this._sampleCharacterSet.slice(
       0, Math.round(this._sampleCharacterSet.length * this._sample));
 
-    var userMatches = new RegExp('^[' + effectiveCharacterSet + ']', 'i').test(user);
+    const userMatches = new RegExp('^[' + effectiveCharacterSet + ']', 'i').test(user);
     return userMatches;
+  },
+
+  _matchesUniformSample: function(user) {
+    if (!this._sample || !((this._sample >= 0) && (this._sample <= 1))) return false;
+
+    // We've got to project `user` onto the sample space (i.e. convert it to a number between 0 and
+    // 1) in a way that is a) deterministic b) uniform. We do this by hashing the user, converting it
+    // to an unsigned 32-bit integer, and then normalizing by the size of the max UInt32--essentially
+    // this solution https://stats.stackexchange.com/a/70884 but with only two buckets ("in trial",
+    // or "not in trial").
+    const hash = new sha256();
+    const buf = hash.update(user).digest();
+
+    // This method of conversion-to-integer will truncate the hash to the first four bytes. But hashes
+    // are designed to be random in each individual bit https://crypto.stackexchange.com/a/26859, so
+    // this is no less uniform--just with greater likelihood of collisions, which is fine for us since
+    // we're collapsing the distribution onto two buckets anyway.
+    const uint32 = Buffer.from(buf).readUInt32BE(0);
+
+    const sample = uint32 / MAX_UINT_32;
+    return sample <= this._sample;
   }
 });
 

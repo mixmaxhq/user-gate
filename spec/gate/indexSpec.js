@@ -89,4 +89,27 @@ describe('UserGate', function() {
       expect(gate.allows('bar@mixmax.com')).toBe(true);
     });
   });
+
+  describe('uniform sample', () => {
+    it('should be deterministic', () => {
+      const gate = new UserGate({ sample: 0.5 });
+      expect(gate._matchesUniformSample('alice@mixmax.com')).toBe(true);
+      expect(gate._matchesUniformSample('alice@mixmax.com')).toBe(true);
+
+      expect(gate._matchesUniformSample('ziggy@mixmax.com')).toBe(false);
+      expect(gate._matchesUniformSample('ziggy@mixmax.com')).toBe(false);
+    });
+
+    it('should not allow anyone through the gate with a sample of 0', () => {
+      const gate = new UserGate({ sample: 0 });
+      expect(gate._matchesUniformSample('alice@mixmax.com')).toBe(false);
+      expect(gate._matchesUniformSample('ziggy@mixmax.com')).toBe(false);
+    });
+
+    it('should allow anyone through the gate with a sample of 1', () => {
+      const gate = new UserGate({ sample: 1 });
+      expect(gate._matchesUniformSample('alice@mixmax.com')).toBe(true);
+      expect(gate._matchesUniformSample('ziggy@mixmax.com')).toBe(true);
+    });
+  })
 });

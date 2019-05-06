@@ -1,4 +1,157 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+'use strict'
+
+exports.byteLength = byteLength
+exports.toByteArray = toByteArray
+exports.fromByteArray = fromByteArray
+
+var lookup = []
+var revLookup = []
+var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
+
+var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+for (var i = 0, len = code.length; i < len; ++i) {
+  lookup[i] = code[i]
+  revLookup[code.charCodeAt(i)] = i
+}
+
+// Support decoding URL-safe base64 strings, as Node.js does.
+// See: https://en.wikipedia.org/wiki/Base64#URL_applications
+revLookup['-'.charCodeAt(0)] = 62
+revLookup['_'.charCodeAt(0)] = 63
+
+function getLens (b64) {
+  var len = b64.length
+
+  if (len % 4 > 0) {
+    throw new Error('Invalid string. Length must be a multiple of 4')
+  }
+
+  // Trim off extra bytes after placeholder bytes are found
+  // See: https://github.com/beatgammit/base64-js/issues/42
+  var validLen = b64.indexOf('=')
+  if (validLen === -1) validLen = len
+
+  var placeHoldersLen = validLen === len
+    ? 0
+    : 4 - (validLen % 4)
+
+  return [validLen, placeHoldersLen]
+}
+
+// base64 is 4/3 + up to two characters of the original data
+function byteLength (b64) {
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+}
+
+function _byteLength (b64, validLen, placeHoldersLen) {
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+}
+
+function toByteArray (b64) {
+  var tmp
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
+
+  var arr = new Arr(_byteLength(b64, validLen, placeHoldersLen))
+
+  var curByte = 0
+
+  // if there are placeholders, only get up to the last complete 4 chars
+  var len = placeHoldersLen > 0
+    ? validLen - 4
+    : validLen
+
+  for (var i = 0; i < len; i += 4) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 18) |
+      (revLookup[b64.charCodeAt(i + 1)] << 12) |
+      (revLookup[b64.charCodeAt(i + 2)] << 6) |
+      revLookup[b64.charCodeAt(i + 3)]
+    arr[curByte++] = (tmp >> 16) & 0xFF
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  if (placeHoldersLen === 2) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 2) |
+      (revLookup[b64.charCodeAt(i + 1)] >> 4)
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  if (placeHoldersLen === 1) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 10) |
+      (revLookup[b64.charCodeAt(i + 1)] << 4) |
+      (revLookup[b64.charCodeAt(i + 2)] >> 2)
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  return arr
+}
+
+function tripletToBase64 (num) {
+  return lookup[num >> 18 & 0x3F] +
+    lookup[num >> 12 & 0x3F] +
+    lookup[num >> 6 & 0x3F] +
+    lookup[num & 0x3F]
+}
+
+function encodeChunk (uint8, start, end) {
+  var tmp
+  var output = []
+  for (var i = start; i < end; i += 3) {
+    tmp =
+      ((uint8[i] << 16) & 0xFF0000) +
+      ((uint8[i + 1] << 8) & 0xFF00) +
+      (uint8[i + 2] & 0xFF)
+    output.push(tripletToBase64(tmp))
+  }
+  return output.join('')
+}
+
+function fromByteArray (uint8) {
+  var tmp
+  var len = uint8.length
+  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
+  var parts = []
+  var maxChunkLength = 16383 // must be multiple of 3
+
+  // go through the array every three bytes, we'll deal with trailing stuff later
+  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
+    parts.push(encodeChunk(
+      uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)
+    ))
+  }
+
+  // pad the end with zeros, but make sure to not forget the extra bytes
+  if (extraBytes === 1) {
+    tmp = uint8[len - 1]
+    parts.push(
+      lookup[tmp >> 2] +
+      lookup[(tmp << 4) & 0x3F] +
+      '=='
+    )
+  } else if (extraBytes === 2) {
+    tmp = (uint8[len - 2] << 8) + uint8[len - 1]
+    parts.push(
+      lookup[tmp >> 10] +
+      lookup[(tmp >> 4) & 0x3F] +
+      lookup[(tmp << 2) & 0x3F] +
+      '='
+    )
+  }
+
+  return parts.join('')
+}
+
+},{}],2:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 var mmh3 = require('murmur-hash').v3;
@@ -137,621 +290,14 @@ Filter.LN2 = Math.log(2); // 0.6931471805599453094172321214581765680755001343602
 module.exports = Filter;
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":6,"murmur-hash":3}],2:[function(require,module,exports){
+},{"buffer":4,"murmur-hash":8}],3:[function(require,module,exports){
 'use strict';
 
 module.exports = {};
 module.exports = require('./filter');
 
-},{"./filter":1}],3:[function(require,module,exports){
-'use strict';
-
-module.exports =  {
-  v3: require('./lib/v3')
-};
-
-// -- Test Code ---------------------------------------------------------
-if (require.main === module) {
-  (function () {
-    console.log(module.exports.v3);
-  })();
-}
-
-},{"./lib/v3":4}],4:[function(require,module,exports){
-'use strict';
-
-module.exports = require('./murmur');
-
-},{"./murmur":5}],5:[function(require,module,exports){
-// +----------------------------------------------------------------------+
-// | murmurHash3.js v2.1.2 (http://github.com/karanlyons/murmurHash.js)   |
-// | A javascript implementation of MurmurHash3's x86 hashing algorithms. |
-// |----------------------------------------------------------------------|
-// | Copyright (c) 2012 Karan Lyons                                       |
-// | Freely distributable under the MIT license.                          |
-// +----------------------------------------------------------------------+
-
-
-;(function (root, undefined) {
-  'use strict';
-
-  // Create a local object that'll be exported or referenced globally.
-  var library = {
-    'version': '2.1.2',
-    'x86': {},
-    'x64': {}
-  };
-
-
-
-
-  // PRIVATE FUNCTIONS
-  // -----------------
-
-  function _x86Multiply(m, n) {
-    //
-    // Given two 32bit ints, returns the two multiplied together as a
-    // 32bit int.
-    //
-
-    return ((m & 0xffff) * n) + ((((m >>> 16) * n) & 0xffff) << 16);
-  }
-
-
-  function _x86Rotl(m, n) {
-    //
-    // Given a 32bit int and an int representing a number of bit positions,
-    // returns the 32bit int rotated left by that number of positions.
-    //
-
-    return (m << n) | (m >>> (32 - n));
-  }
-
-
-  function _x86Fmix(h) {
-    //
-    // Given a block, returns murmurHash3's final x86 mix of that block.
-    //
-
-    h ^= h >>> 16;
-    h  = _x86Multiply(h, 0x85ebca6b);
-    h ^= h >>> 13;
-    h  = _x86Multiply(h, 0xc2b2ae35);
-    h ^= h >>> 16;
-
-    return h;
-  }
-
-
-  function _x64Add(m, n) {
-    //
-    // Given two 64bit ints (as an array of two 32bit ints) returns the two
-    // added together as a 64bit int (as an array of two 32bit ints).
-    //
-
-    m = [m[0] >>> 16, m[0] & 0xffff, m[1] >>> 16, m[1] & 0xffff];
-    n = [n[0] >>> 16, n[0] & 0xffff, n[1] >>> 16, n[1] & 0xffff];
-    var o = [0, 0, 0, 0];
-
-    o[3] += m[3] + n[3];
-    o[2] += o[3] >>> 16;
-    o[3] &= 0xffff;
-
-    o[2] += m[2] + n[2];
-    o[1] += o[2] >>> 16;
-    o[2] &= 0xffff;
-
-    o[1] += m[1] + n[1];
-    o[0] += o[1] >>> 16;
-    o[1] &= 0xffff;
-
-    o[0] += m[0] + n[0];
-    o[0] &= 0xffff;
-
-    return [(o[0] << 16) | o[1], (o[2] << 16) | o[3]];
-  }
-
-
-  function _x64Multiply(m, n) {
-    //
-    // Given two 64bit ints (as an array of two 32bit ints) returns the two
-    // multiplied together as a 64bit int (as an array of two 32bit ints).
-    //
-
-    m = [m[0] >>> 16, m[0] & 0xffff, m[1] >>> 16, m[1] & 0xffff];
-    n = [n[0] >>> 16, n[0] & 0xffff, n[1] >>> 16, n[1] & 0xffff];
-    var o = [0, 0, 0, 0];
-
-    o[3] += m[3] * n[3];
-    o[2] += o[3] >>> 16;
-    o[3] &= 0xffff;
-
-    o[2] += m[2] * n[3];
-    o[1] += o[2] >>> 16;
-    o[2] &= 0xffff;
-
-    o[2] += m[3] * n[2];
-    o[1] += o[2] >>> 16;
-    o[2] &= 0xffff;
-
-    o[1] += m[1] * n[3];
-    o[0] += o[1] >>> 16;
-    o[1] &= 0xffff;
-
-    o[1] += m[2] * n[2];
-    o[0] += o[1] >>> 16;
-    o[1] &= 0xffff;
-
-    o[1] += m[3] * n[1];
-    o[0] += o[1] >>> 16;
-    o[1] &= 0xffff;
-
-    o[0] += (m[0] * n[3]) + (m[1] * n[2]) + (m[2] * n[1]) + (m[3] * n[0]);
-    o[0] &= 0xffff;
-
-    return [(o[0] << 16) | o[1], (o[2] << 16) | o[3]];
-  }
-
-
-  function _x64Rotl(m, n) {
-    //
-    // Given a 64bit int (as an array of two 32bit ints) and an int
-    // representing a number of bit positions, returns the 64bit int (as an
-    // array of two 32bit ints) rotated left by that number of positions.
-    //
-
-    n %= 64;
-
-    if (n === 32) {
-      return [m[1], m[0]];
-    }
-
-    else if (n < 32) {
-      return [(m[0] << n) | (m[1] >>> (32 - n)), (m[1] << n) | (m[0] >>> (32 - n))];
-    }
-
-    else {
-      n -= 32;
-      return [(m[1] << n) | (m[0] >>> (32 - n)), (m[0] << n) | (m[1] >>> (32 - n))];
-    }
-  }
-
-
-  function _x64LeftShift(m, n) {
-    //
-    // Given a 64bit int (as an array of two 32bit ints) and an int
-    // representing a number of bit positions, returns the 64bit int (as an
-    // array of two 32bit ints) shifted left by that number of positions.
-    //
-
-    n %= 64;
-
-    if (n === 0) {
-      return m;
-    }
-
-    else if (n < 32) {
-      return [(m[0] << n) | (m[1] >>> (32 - n)), m[1] << n];
-    }
-
-    else {
-      return [m[1] << (n - 32), 0];
-    }
-  }
-
-
-  function _x64Xor(m, n) {
-    //
-    // Given two 64bit ints (as an array of two 32bit ints) returns the two
-    // xored together as a 64bit int (as an array of two 32bit ints).
-    //
-
-    return [m[0] ^ n[0], m[1] ^ n[1]];
-  }
-
-
-  function _x64Fmix(h) {
-    //
-    // Given a block, returns murmurHash3's final x64 mix of that block.
-    // (`[0, h[0] >>> 1]` is a 33 bit unsigned right shift. This is the
-    // only place where we need to right shift 64bit ints.)
-    //
-
-    h = _x64Xor(h, [0, h[0] >>> 1]);
-    h = _x64Multiply(h, [0xff51afd7, 0xed558ccd]);
-    h = _x64Xor(h, [0, h[0] >>> 1]);
-    h = _x64Multiply(h, [0xc4ceb9fe, 0x1a85ec53]);
-    h = _x64Xor(h, [0, h[0] >>> 1]);
-
-    return h;
-  }
-
-
-
-
-  // PUBLIC FUNCTIONS
-  // ----------------
-
-  library.x86.hash32 = function (key, seed) {
-    //
-    // Given a string and an optional seed as an int, returns a 32 bit hash
-    // using the x86 flavor of MurmurHash3, as an unsigned int.
-    //
-
-    key = key || '';
-    seed = seed || 0;
-
-    var remainder = key.length % 4;
-    var bytes = key.length - remainder;
-
-    var h1 = seed;
-
-    var k1 = 0;
-
-    var c1 = 0xcc9e2d51;
-    var c2 = 0x1b873593;
-
-    for (var i = 0; i < bytes; i = i + 4) {
-      k1 = ((key.charCodeAt(i) & 0xff)) | ((key.charCodeAt(i + 1) & 0xff) << 8) | ((key.charCodeAt(i + 2) & 0xff) << 16) | ((key.charCodeAt(i + 3) & 0xff) << 24);
-
-      k1 = _x86Multiply(k1, c1);
-      k1 = _x86Rotl(k1, 15);
-      k1 = _x86Multiply(k1, c2);
-
-      h1 ^= k1;
-      h1 = _x86Rotl(h1, 13);
-      h1 = _x86Multiply(h1, 5) + 0xe6546b64;
-    }
-
-    k1 = 0;
-
-    switch (remainder) {
-      case 3:
-        k1 ^= (key.charCodeAt(i + 2) & 0xff) << 16;
-
-      case 2:
-        k1 ^= (key.charCodeAt(i + 1) & 0xff) << 8;
-
-      case 1:
-        k1 ^= (key.charCodeAt(i) & 0xff);
-        k1 = _x86Multiply(k1, c1);
-        k1 = _x86Rotl(k1, 15);
-        k1 = _x86Multiply(k1, c2);
-        h1 ^= k1;
-    }
-
-    h1 ^= key.length;
-    h1 = _x86Fmix(h1);
-
-    return h1 >>> 0;
-  };
-
-
-  library.x86.hash128 = function (key, seed) {
-    //
-    // Given a string and an optional seed as an int, returns a 128 bit
-    // hash using the x86 flavor of MurmurHash3, as an unsigned hex.
-    //
-
-    key = key || '';
-    seed = seed || 0;
-
-    var remainder = key.length % 16;
-    var bytes = key.length - remainder;
-
-    var h1 = seed;
-    var h2 = seed;
-    var h3 = seed;
-    var h4 = seed;
-
-    var k1 = 0;
-    var k2 = 0;
-    var k3 = 0;
-    var k4 = 0;
-
-    var c1 = 0x239b961b;
-    var c2 = 0xab0e9789;
-    var c3 = 0x38b34ae5;
-    var c4 = 0xa1e38b93;
-
-    for (var i = 0; i < bytes; i = i + 16) {
-      k1 = ((key.charCodeAt(i) & 0xff)) | ((key.charCodeAt(i + 1) & 0xff) << 8) | ((key.charCodeAt(i + 2) & 0xff) << 16) | ((key.charCodeAt(i + 3) & 0xff) << 24);
-      k2 = ((key.charCodeAt(i + 4) & 0xff)) | ((key.charCodeAt(i + 5) & 0xff) << 8) | ((key.charCodeAt(i + 6) & 0xff) << 16) | ((key.charCodeAt(i + 7) & 0xff) << 24);
-      k3 = ((key.charCodeAt(i + 8) & 0xff)) | ((key.charCodeAt(i + 9) & 0xff) << 8) | ((key.charCodeAt(i + 10) & 0xff) << 16) | ((key.charCodeAt(i + 11) & 0xff) << 24);
-      k4 = ((key.charCodeAt(i + 12) & 0xff)) | ((key.charCodeAt(i + 13) & 0xff) << 8) | ((key.charCodeAt(i + 14) & 0xff) << 16) | ((key.charCodeAt(i + 15) & 0xff) << 24);
-
-      k1 = _x86Multiply(k1, c1);
-      k1 = _x86Rotl(k1, 15);
-      k1 = _x86Multiply(k1, c2);
-      h1 ^= k1;
-
-      h1 = _x86Rotl(h1, 19);
-      h1 += h2;
-      h1 = _x86Multiply(h1, 5) + 0x561ccd1b;
-
-      k2 = _x86Multiply(k2, c2);
-      k2 = _x86Rotl(k2, 16);
-      k2 = _x86Multiply(k2, c3);
-      h2 ^= k2;
-
-      h2 = _x86Rotl(h2, 17);
-      h2 += h3;
-      h2 = _x86Multiply(h2, 5) + 0x0bcaa747;
-
-      k3 = _x86Multiply(k3, c3);
-      k3 = _x86Rotl(k3, 17);
-      k3 = _x86Multiply(k3, c4);
-      h3 ^= k3;
-
-      h3 = _x86Rotl(h3, 15);
-      h3 += h4;
-      h3 = _x86Multiply(h3, 5) + 0x96cd1c35;
-
-      k4 = _x86Multiply(k4, c4);
-      k4 = _x86Rotl(k4, 18);
-      k4 = _x86Multiply(k4, c1);
-      h4 ^= k4;
-
-      h4 = _x86Rotl(h4, 13);
-      h4 += h1;
-      h4 = _x86Multiply(h4, 5) + 0x32ac3b17;
-    }
-
-    k1 = 0;
-    k2 = 0;
-    k3 = 0;
-    k4 = 0;
-
-    switch (remainder) {
-      case 15:
-        k4 ^= key.charCodeAt(i + 14) << 16;
-
-      case 14:
-        k4 ^= key.charCodeAt(i + 13) << 8;
-
-      case 13:
-        k4 ^= key.charCodeAt(i + 12);
-        k4 = _x86Multiply(k4, c4);
-        k4 = _x86Rotl(k4, 18);
-        k4 = _x86Multiply(k4, c1);
-        h4 ^= k4;
-
-      case 12:
-        k3 ^= key.charCodeAt(i + 11) << 24;
-
-      case 11:
-        k3 ^= key.charCodeAt(i + 10) << 16;
-
-      case 10:
-        k3 ^= key.charCodeAt(i + 9) << 8;
-
-      case 9:
-        k3 ^= key.charCodeAt(i + 8);
-        k3 = _x86Multiply(k3, c3);
-        k3 = _x86Rotl(k3, 17);
-        k3 = _x86Multiply(k3, c4);
-        h3 ^= k3;
-
-      case 8:
-        k2 ^= key.charCodeAt(i + 7) << 24;
-
-      case 7:
-        k2 ^= key.charCodeAt(i + 6) << 16;
-
-      case 6:
-        k2 ^= key.charCodeAt(i + 5) << 8;
-
-      case 5:
-        k2 ^= key.charCodeAt(i + 4);
-        k2 = _x86Multiply(k2, c2);
-        k2 = _x86Rotl(k2, 16);
-        k2 = _x86Multiply(k2, c3);
-        h2 ^= k2;
-
-      case 4:
-        k1 ^= key.charCodeAt(i + 3) << 24;
-
-      case 3:
-        k1 ^= key.charCodeAt(i + 2) << 16;
-
-      case 2:
-        k1 ^= key.charCodeAt(i + 1) << 8;
-
-      case 1:
-        k1 ^= key.charCodeAt(i);
-        k1 = _x86Multiply(k1, c1);
-        k1 = _x86Rotl(k1, 15);
-        k1 = _x86Multiply(k1, c2);
-        h1 ^= k1;
-    }
-
-    h1 ^= key.length;
-    h2 ^= key.length;
-    h3 ^= key.length;
-    h4 ^= key.length;
-
-    h1 += h2;
-    h1 += h3;
-    h1 += h4;
-    h2 += h1;
-    h3 += h1;
-    h4 += h1;
-
-    h1 = _x86Fmix(h1);
-    h2 = _x86Fmix(h2);
-    h3 = _x86Fmix(h3);
-    h4 = _x86Fmix(h4);
-
-    h1 += h2;
-    h1 += h3;
-    h1 += h4;
-    h2 += h1;
-    h3 += h1;
-    h4 += h1;
-
-    return ("00000000" + (h1 >>> 0).toString(16)).slice(-8) + ("00000000" + (h2 >>> 0).toString(16)).slice(-8) + ("00000000" + (h3 >>> 0).toString(16)).slice(-8) + ("00000000" + (h4 >>> 0).toString(16)).slice(-8);
-  };
-
-
-  library.x64.hash128 = function (key, seed) {
-    //
-    // Given a string and an optional seed as an int, returns a 128 bit
-    // hash using the x64 flavor of MurmurHash3, as an unsigned hex.
-    //
-
-    key = key || '';
-    seed = seed || 0;
-
-    var remainder = key.length % 16;
-    var bytes = key.length - remainder;
-
-    var h1 = [0, seed];
-    var h2 = [0, seed];
-
-    var k1 = [0, 0];
-    var k2 = [0, 0];
-
-    var c1 = [0x87c37b91, 0x114253d5];
-    var c2 = [0x4cf5ad43, 0x2745937f];
-
-    for (var i = 0; i < bytes; i = i + 16) {
-      k1 = [((key.charCodeAt(i + 4) & 0xff)) | ((key.charCodeAt(i + 5) & 0xff) << 8) | ((key.charCodeAt(i + 6) & 0xff) << 16) | ((key.charCodeAt(i + 7) & 0xff) << 24), ((key.charCodeAt(i) & 0xff)) | ((key.charCodeAt(i + 1) & 0xff) << 8) | ((key.charCodeAt(i + 2) & 0xff) << 16) | ((key.charCodeAt(i + 3) & 0xff) << 24)];
-      k2 = [((key.charCodeAt(i + 12) & 0xff)) | ((key.charCodeAt(i + 13) & 0xff) << 8) | ((key.charCodeAt(i + 14) & 0xff) << 16) | ((key.charCodeAt(i + 15) & 0xff) << 24), ((key.charCodeAt(i + 8) & 0xff)) | ((key.charCodeAt(i + 9) & 0xff) << 8) | ((key.charCodeAt(i + 10) & 0xff) << 16) | ((key.charCodeAt(i + 11) & 0xff) << 24)];
-
-      k1 = _x64Multiply(k1, c1);
-      k1 = _x64Rotl(k1, 31);
-      k1 = _x64Multiply(k1, c2);
-      h1 = _x64Xor(h1, k1);
-
-      h1 = _x64Rotl(h1, 27);
-      h1 = _x64Add(h1, h2);
-      h1 = _x64Add(_x64Multiply(h1, [0, 5]), [0, 0x52dce729]);
-
-      k2 = _x64Multiply(k2, c2);
-      k2 = _x64Rotl(k2, 33);
-      k2 = _x64Multiply(k2, c1);
-      h2 = _x64Xor(h2, k2);
-
-      h2 = _x64Rotl(h2, 31);
-      h2 = _x64Add(h2, h1);
-      h2 = _x64Add(_x64Multiply(h2, [0, 5]), [0, 0x38495ab5]);
-    }
-
-    k1 = [0, 0];
-    k2 = [0, 0];
-
-    switch(remainder) {
-      case 15:
-        k2 = _x64Xor(k2, _x64LeftShift([0, key.charCodeAt(i + 14)], 48));
-
-      case 14:
-        k2 = _x64Xor(k2, _x64LeftShift([0, key.charCodeAt(i + 13)], 40));
-
-      case 13:
-        k2 = _x64Xor(k2, _x64LeftShift([0, key.charCodeAt(i + 12)], 32));
-
-      case 12:
-        k2 = _x64Xor(k2, _x64LeftShift([0, key.charCodeAt(i + 11)], 24));
-
-      case 11:
-        k2 = _x64Xor(k2, _x64LeftShift([0, key.charCodeAt(i + 10)], 16));
-
-      case 10:
-        k2 = _x64Xor(k2, _x64LeftShift([0, key.charCodeAt(i + 9)], 8));
-
-      case 9:
-        k2 = _x64Xor(k2, [0, key.charCodeAt(i + 8)]);
-        k2 = _x64Multiply(k2, c2);
-        k2 = _x64Rotl(k2, 33);
-        k2 = _x64Multiply(k2, c1);
-        h2 = _x64Xor(h2, k2);
-
-      case 8:
-        k1 = _x64Xor(k1, _x64LeftShift([0, key.charCodeAt(i + 7)], 56));
-
-      case 7:
-        k1 = _x64Xor(k1, _x64LeftShift([0, key.charCodeAt(i + 6)], 48));
-
-      case 6:
-        k1 = _x64Xor(k1, _x64LeftShift([0, key.charCodeAt(i + 5)], 40));
-
-      case 5:
-        k1 = _x64Xor(k1, _x64LeftShift([0, key.charCodeAt(i + 4)], 32));
-
-      case 4:
-        k1 = _x64Xor(k1, _x64LeftShift([0, key.charCodeAt(i + 3)], 24));
-
-      case 3:
-        k1 = _x64Xor(k1, _x64LeftShift([0, key.charCodeAt(i + 2)], 16));
-
-      case 2:
-        k1 = _x64Xor(k1, _x64LeftShift([0, key.charCodeAt(i + 1)], 8));
-
-      case 1:
-        k1 = _x64Xor(k1, [0, key.charCodeAt(i)]);
-        k1 = _x64Multiply(k1, c1);
-        k1 = _x64Rotl(k1, 31);
-        k1 = _x64Multiply(k1, c2);
-        h1 = _x64Xor(h1, k1);
-    }
-
-    h1 = _x64Xor(h1, [0, key.length]);
-    h2 = _x64Xor(h2, [0, key.length]);
-
-    h1 = _x64Add(h1, h2);
-    h2 = _x64Add(h2, h1);
-
-    h1 = _x64Fmix(h1);
-    h2 = _x64Fmix(h2);
-
-    h1 = _x64Add(h1, h2);
-    h2 = _x64Add(h2, h1);
-
-    return ("00000000" + (h1[0] >>> 0).toString(16)).slice(-8) + ("00000000" + (h1[1] >>> 0).toString(16)).slice(-8) + ("00000000" + (h2[0] >>> 0).toString(16)).slice(-8) + ("00000000" + (h2[1] >>> 0).toString(16)).slice(-8);
-  };
-
-
-
-
-  // INITIALIZATION
-  // --------------
-
-  // Export murmurHash3 for CommonJS, either as an AMD module or just as part
-  // of the global object.
-  if (typeof exports !== 'undefined') {
-    if (typeof module !== 'undefined' && module.exports) {
-      exports = module.exports = library;
-    }
-
-    exports.murmurHash3 = library;
-  }
-
-  else if (typeof define === 'function' && define.amd) {
-    define([], function() {
-      return library;
-    });
-  }
-
-  else {
-    // Use murmurHash3.noConflict to restore `murmurHash3` back to its
-    // original value. Returns a reference to the library object, to allow
-    // it to be used under a different name.
-    library._murmurHash3 = root.murmurHash3
-
-    library.noConflict = function () {
-      root.murmurHash3 = library._murmurHash3;
-      library._murmurHash3 = undefined;
-      library.noConflict = undefined;
-
-      return library;
-    };
-
-    root.murmurHash3 = library;
-  }
-})(this);
-
-},{}],6:[function(require,module,exports){
-(function (global){
+},{"./filter":2}],4:[function(require,module,exports){
+(function (global,Buffer){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -2542,127 +2088,11 @@ function isnan (val) {
   return val !== val // eslint-disable-line no-self-compare
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"base64-js":7,"ieee754":8,"isarray":9}],7:[function(require,module,exports){
-'use strict'
-
-exports.byteLength = byteLength
-exports.toByteArray = toByteArray
-exports.fromByteArray = fromByteArray
-
-var lookup = []
-var revLookup = []
-var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
-
-var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-for (var i = 0, len = code.length; i < len; ++i) {
-  lookup[i] = code[i]
-  revLookup[code.charCodeAt(i)] = i
-}
-
-revLookup['-'.charCodeAt(0)] = 62
-revLookup['_'.charCodeAt(0)] = 63
-
-function placeHoldersCount (b64) {
-  var len = b64.length
-  if (len % 4 > 0) {
-    throw new Error('Invalid string. Length must be a multiple of 4')
-  }
-
-  // the number of equal signs (place holders)
-  // if there are two placeholders, than the two characters before it
-  // represent one byte
-  // if there is only one, then the three characters before it represent 2 bytes
-  // this is just a cheap hack to not do indexOf twice
-  return b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
-}
-
-function byteLength (b64) {
-  // base64 is 4/3 + up to two characters of the original data
-  return b64.length * 3 / 4 - placeHoldersCount(b64)
-}
-
-function toByteArray (b64) {
-  var i, j, l, tmp, placeHolders, arr
-  var len = b64.length
-  placeHolders = placeHoldersCount(b64)
-
-  arr = new Arr(len * 3 / 4 - placeHolders)
-
-  // if there are placeholders, only get up to the last complete 4 chars
-  l = placeHolders > 0 ? len - 4 : len
-
-  var L = 0
-
-  for (i = 0, j = 0; i < l; i += 4, j += 3) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)]
-    arr[L++] = (tmp >> 16) & 0xFF
-    arr[L++] = (tmp >> 8) & 0xFF
-    arr[L++] = tmp & 0xFF
-  }
-
-  if (placeHolders === 2) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 2) | (revLookup[b64.charCodeAt(i + 1)] >> 4)
-    arr[L++] = tmp & 0xFF
-  } else if (placeHolders === 1) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 10) | (revLookup[b64.charCodeAt(i + 1)] << 4) | (revLookup[b64.charCodeAt(i + 2)] >> 2)
-    arr[L++] = (tmp >> 8) & 0xFF
-    arr[L++] = tmp & 0xFF
-  }
-
-  return arr
-}
-
-function tripletToBase64 (num) {
-  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
-}
-
-function encodeChunk (uint8, start, end) {
-  var tmp
-  var output = []
-  for (var i = start; i < end; i += 3) {
-    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
-    output.push(tripletToBase64(tmp))
-  }
-  return output.join('')
-}
-
-function fromByteArray (uint8) {
-  var tmp
-  var len = uint8.length
-  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
-  var output = ''
-  var parts = []
-  var maxChunkLength = 16383 // must be multiple of 3
-
-  // go through the array every three bytes, we'll deal with trailing stuff later
-  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
-    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
-  }
-
-  // pad the end with zeros, but make sure to not forget the extra bytes
-  if (extraBytes === 1) {
-    tmp = uint8[len - 1]
-    output += lookup[tmp >> 2]
-    output += lookup[(tmp << 4) & 0x3F]
-    output += '=='
-  } else if (extraBytes === 2) {
-    tmp = (uint8[len - 2] << 8) + (uint8[len - 1])
-    output += lookup[tmp >> 10]
-    output += lookup[(tmp >> 4) & 0x3F]
-    output += lookup[(tmp << 2) & 0x3F]
-    output += '='
-  }
-
-  parts.push(output)
-
-  return parts.join('')
-}
-
-},{}],8:[function(require,module,exports){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
+},{"base64-js":1,"buffer":4,"ieee754":5,"isarray":7}],5:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
-  var eLen = nBytes * 8 - mLen - 1
+  var eLen = (nBytes * 8) - mLen - 1
   var eMax = (1 << eLen) - 1
   var eBias = eMax >> 1
   var nBits = -7
@@ -2675,12 +2105,12 @@ exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   e = s & ((1 << (-nBits)) - 1)
   s >>= (-nBits)
   nBits += eLen
-  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+  for (; nBits > 0; e = (e * 256) + buffer[offset + i], i += d, nBits -= 8) {}
 
   m = e & ((1 << (-nBits)) - 1)
   e >>= (-nBits)
   nBits += mLen
-  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+  for (; nBits > 0; m = (m * 256) + buffer[offset + i], i += d, nBits -= 8) {}
 
   if (e === 0) {
     e = 1 - eBias
@@ -2695,7 +2125,7 @@ exports.read = function (buffer, offset, isLE, mLen, nBytes) {
 
 exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   var e, m, c
-  var eLen = nBytes * 8 - mLen - 1
+  var eLen = (nBytes * 8) - mLen - 1
   var eMax = (1 << eLen) - 1
   var eBias = eMax >> 1
   var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
@@ -2728,7 +2158,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
       m = 0
       e = eMax
     } else if (e + eBias >= 1) {
-      m = (value * c - 1) * Math.pow(2, mLen)
+      m = ((value * c) - 1) * Math.pow(2, mLen)
       e = e + eBias
     } else {
       m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
@@ -2745,14 +2175,930 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],9:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
+if (typeof Object.create === 'function') {
+  // implementation from standard node.js 'util' module
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    ctor.prototype = Object.create(superCtor.prototype, {
+      constructor: {
+        value: ctor,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+  };
+} else {
+  // old school shim for old browsers
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    var TempCtor = function () {}
+    TempCtor.prototype = superCtor.prototype
+    ctor.prototype = new TempCtor()
+    ctor.prototype.constructor = ctor
+  }
+}
+
+},{}],7:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],10:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
+'use strict';
+
+module.exports =  {
+  v3: require('./lib/v3')
+};
+
+// -- Test Code ---------------------------------------------------------
+if (require.main === module) {
+  (function () {
+    console.log(module.exports.v3);
+  })();
+}
+
+},{"./lib/v3":9}],9:[function(require,module,exports){
+'use strict';
+
+module.exports = require('./murmur');
+
+},{"./murmur":10}],10:[function(require,module,exports){
+// +----------------------------------------------------------------------+
+// | murmurHash3.js v2.1.2 (http://github.com/karanlyons/murmurHash.js)   |
+// | A javascript implementation of MurmurHash3's x86 hashing algorithms. |
+// |----------------------------------------------------------------------|
+// | Copyright (c) 2012 Karan Lyons                                       |
+// | Freely distributable under the MIT license.                          |
+// +----------------------------------------------------------------------+
+
+
+;(function (root, undefined) {
+  'use strict';
+
+  // Create a local object that'll be exported or referenced globally.
+  var library = {
+    'version': '2.1.2',
+    'x86': {},
+    'x64': {}
+  };
+
+
+
+
+  // PRIVATE FUNCTIONS
+  // -----------------
+
+  function _x86Multiply(m, n) {
+    //
+    // Given two 32bit ints, returns the two multiplied together as a
+    // 32bit int.
+    //
+
+    return ((m & 0xffff) * n) + ((((m >>> 16) * n) & 0xffff) << 16);
+  }
+
+
+  function _x86Rotl(m, n) {
+    //
+    // Given a 32bit int and an int representing a number of bit positions,
+    // returns the 32bit int rotated left by that number of positions.
+    //
+
+    return (m << n) | (m >>> (32 - n));
+  }
+
+
+  function _x86Fmix(h) {
+    //
+    // Given a block, returns murmurHash3's final x86 mix of that block.
+    //
+
+    h ^= h >>> 16;
+    h  = _x86Multiply(h, 0x85ebca6b);
+    h ^= h >>> 13;
+    h  = _x86Multiply(h, 0xc2b2ae35);
+    h ^= h >>> 16;
+
+    return h;
+  }
+
+
+  function _x64Add(m, n) {
+    //
+    // Given two 64bit ints (as an array of two 32bit ints) returns the two
+    // added together as a 64bit int (as an array of two 32bit ints).
+    //
+
+    m = [m[0] >>> 16, m[0] & 0xffff, m[1] >>> 16, m[1] & 0xffff];
+    n = [n[0] >>> 16, n[0] & 0xffff, n[1] >>> 16, n[1] & 0xffff];
+    var o = [0, 0, 0, 0];
+
+    o[3] += m[3] + n[3];
+    o[2] += o[3] >>> 16;
+    o[3] &= 0xffff;
+
+    o[2] += m[2] + n[2];
+    o[1] += o[2] >>> 16;
+    o[2] &= 0xffff;
+
+    o[1] += m[1] + n[1];
+    o[0] += o[1] >>> 16;
+    o[1] &= 0xffff;
+
+    o[0] += m[0] + n[0];
+    o[0] &= 0xffff;
+
+    return [(o[0] << 16) | o[1], (o[2] << 16) | o[3]];
+  }
+
+
+  function _x64Multiply(m, n) {
+    //
+    // Given two 64bit ints (as an array of two 32bit ints) returns the two
+    // multiplied together as a 64bit int (as an array of two 32bit ints).
+    //
+
+    m = [m[0] >>> 16, m[0] & 0xffff, m[1] >>> 16, m[1] & 0xffff];
+    n = [n[0] >>> 16, n[0] & 0xffff, n[1] >>> 16, n[1] & 0xffff];
+    var o = [0, 0, 0, 0];
+
+    o[3] += m[3] * n[3];
+    o[2] += o[3] >>> 16;
+    o[3] &= 0xffff;
+
+    o[2] += m[2] * n[3];
+    o[1] += o[2] >>> 16;
+    o[2] &= 0xffff;
+
+    o[2] += m[3] * n[2];
+    o[1] += o[2] >>> 16;
+    o[2] &= 0xffff;
+
+    o[1] += m[1] * n[3];
+    o[0] += o[1] >>> 16;
+    o[1] &= 0xffff;
+
+    o[1] += m[2] * n[2];
+    o[0] += o[1] >>> 16;
+    o[1] &= 0xffff;
+
+    o[1] += m[3] * n[1];
+    o[0] += o[1] >>> 16;
+    o[1] &= 0xffff;
+
+    o[0] += (m[0] * n[3]) + (m[1] * n[2]) + (m[2] * n[1]) + (m[3] * n[0]);
+    o[0] &= 0xffff;
+
+    return [(o[0] << 16) | o[1], (o[2] << 16) | o[3]];
+  }
+
+
+  function _x64Rotl(m, n) {
+    //
+    // Given a 64bit int (as an array of two 32bit ints) and an int
+    // representing a number of bit positions, returns the 64bit int (as an
+    // array of two 32bit ints) rotated left by that number of positions.
+    //
+
+    n %= 64;
+
+    if (n === 32) {
+      return [m[1], m[0]];
+    }
+
+    else if (n < 32) {
+      return [(m[0] << n) | (m[1] >>> (32 - n)), (m[1] << n) | (m[0] >>> (32 - n))];
+    }
+
+    else {
+      n -= 32;
+      return [(m[1] << n) | (m[0] >>> (32 - n)), (m[0] << n) | (m[1] >>> (32 - n))];
+    }
+  }
+
+
+  function _x64LeftShift(m, n) {
+    //
+    // Given a 64bit int (as an array of two 32bit ints) and an int
+    // representing a number of bit positions, returns the 64bit int (as an
+    // array of two 32bit ints) shifted left by that number of positions.
+    //
+
+    n %= 64;
+
+    if (n === 0) {
+      return m;
+    }
+
+    else if (n < 32) {
+      return [(m[0] << n) | (m[1] >>> (32 - n)), m[1] << n];
+    }
+
+    else {
+      return [m[1] << (n - 32), 0];
+    }
+  }
+
+
+  function _x64Xor(m, n) {
+    //
+    // Given two 64bit ints (as an array of two 32bit ints) returns the two
+    // xored together as a 64bit int (as an array of two 32bit ints).
+    //
+
+    return [m[0] ^ n[0], m[1] ^ n[1]];
+  }
+
+
+  function _x64Fmix(h) {
+    //
+    // Given a block, returns murmurHash3's final x64 mix of that block.
+    // (`[0, h[0] >>> 1]` is a 33 bit unsigned right shift. This is the
+    // only place where we need to right shift 64bit ints.)
+    //
+
+    h = _x64Xor(h, [0, h[0] >>> 1]);
+    h = _x64Multiply(h, [0xff51afd7, 0xed558ccd]);
+    h = _x64Xor(h, [0, h[0] >>> 1]);
+    h = _x64Multiply(h, [0xc4ceb9fe, 0x1a85ec53]);
+    h = _x64Xor(h, [0, h[0] >>> 1]);
+
+    return h;
+  }
+
+
+
+
+  // PUBLIC FUNCTIONS
+  // ----------------
+
+  library.x86.hash32 = function (key, seed) {
+    //
+    // Given a string and an optional seed as an int, returns a 32 bit hash
+    // using the x86 flavor of MurmurHash3, as an unsigned int.
+    //
+
+    key = key || '';
+    seed = seed || 0;
+
+    var remainder = key.length % 4;
+    var bytes = key.length - remainder;
+
+    var h1 = seed;
+
+    var k1 = 0;
+
+    var c1 = 0xcc9e2d51;
+    var c2 = 0x1b873593;
+
+    for (var i = 0; i < bytes; i = i + 4) {
+      k1 = ((key.charCodeAt(i) & 0xff)) | ((key.charCodeAt(i + 1) & 0xff) << 8) | ((key.charCodeAt(i + 2) & 0xff) << 16) | ((key.charCodeAt(i + 3) & 0xff) << 24);
+
+      k1 = _x86Multiply(k1, c1);
+      k1 = _x86Rotl(k1, 15);
+      k1 = _x86Multiply(k1, c2);
+
+      h1 ^= k1;
+      h1 = _x86Rotl(h1, 13);
+      h1 = _x86Multiply(h1, 5) + 0xe6546b64;
+    }
+
+    k1 = 0;
+
+    switch (remainder) {
+      case 3:
+        k1 ^= (key.charCodeAt(i + 2) & 0xff) << 16;
+
+      case 2:
+        k1 ^= (key.charCodeAt(i + 1) & 0xff) << 8;
+
+      case 1:
+        k1 ^= (key.charCodeAt(i) & 0xff);
+        k1 = _x86Multiply(k1, c1);
+        k1 = _x86Rotl(k1, 15);
+        k1 = _x86Multiply(k1, c2);
+        h1 ^= k1;
+    }
+
+    h1 ^= key.length;
+    h1 = _x86Fmix(h1);
+
+    return h1 >>> 0;
+  };
+
+
+  library.x86.hash128 = function (key, seed) {
+    //
+    // Given a string and an optional seed as an int, returns a 128 bit
+    // hash using the x86 flavor of MurmurHash3, as an unsigned hex.
+    //
+
+    key = key || '';
+    seed = seed || 0;
+
+    var remainder = key.length % 16;
+    var bytes = key.length - remainder;
+
+    var h1 = seed;
+    var h2 = seed;
+    var h3 = seed;
+    var h4 = seed;
+
+    var k1 = 0;
+    var k2 = 0;
+    var k3 = 0;
+    var k4 = 0;
+
+    var c1 = 0x239b961b;
+    var c2 = 0xab0e9789;
+    var c3 = 0x38b34ae5;
+    var c4 = 0xa1e38b93;
+
+    for (var i = 0; i < bytes; i = i + 16) {
+      k1 = ((key.charCodeAt(i) & 0xff)) | ((key.charCodeAt(i + 1) & 0xff) << 8) | ((key.charCodeAt(i + 2) & 0xff) << 16) | ((key.charCodeAt(i + 3) & 0xff) << 24);
+      k2 = ((key.charCodeAt(i + 4) & 0xff)) | ((key.charCodeAt(i + 5) & 0xff) << 8) | ((key.charCodeAt(i + 6) & 0xff) << 16) | ((key.charCodeAt(i + 7) & 0xff) << 24);
+      k3 = ((key.charCodeAt(i + 8) & 0xff)) | ((key.charCodeAt(i + 9) & 0xff) << 8) | ((key.charCodeAt(i + 10) & 0xff) << 16) | ((key.charCodeAt(i + 11) & 0xff) << 24);
+      k4 = ((key.charCodeAt(i + 12) & 0xff)) | ((key.charCodeAt(i + 13) & 0xff) << 8) | ((key.charCodeAt(i + 14) & 0xff) << 16) | ((key.charCodeAt(i + 15) & 0xff) << 24);
+
+      k1 = _x86Multiply(k1, c1);
+      k1 = _x86Rotl(k1, 15);
+      k1 = _x86Multiply(k1, c2);
+      h1 ^= k1;
+
+      h1 = _x86Rotl(h1, 19);
+      h1 += h2;
+      h1 = _x86Multiply(h1, 5) + 0x561ccd1b;
+
+      k2 = _x86Multiply(k2, c2);
+      k2 = _x86Rotl(k2, 16);
+      k2 = _x86Multiply(k2, c3);
+      h2 ^= k2;
+
+      h2 = _x86Rotl(h2, 17);
+      h2 += h3;
+      h2 = _x86Multiply(h2, 5) + 0x0bcaa747;
+
+      k3 = _x86Multiply(k3, c3);
+      k3 = _x86Rotl(k3, 17);
+      k3 = _x86Multiply(k3, c4);
+      h3 ^= k3;
+
+      h3 = _x86Rotl(h3, 15);
+      h3 += h4;
+      h3 = _x86Multiply(h3, 5) + 0x96cd1c35;
+
+      k4 = _x86Multiply(k4, c4);
+      k4 = _x86Rotl(k4, 18);
+      k4 = _x86Multiply(k4, c1);
+      h4 ^= k4;
+
+      h4 = _x86Rotl(h4, 13);
+      h4 += h1;
+      h4 = _x86Multiply(h4, 5) + 0x32ac3b17;
+    }
+
+    k1 = 0;
+    k2 = 0;
+    k3 = 0;
+    k4 = 0;
+
+    switch (remainder) {
+      case 15:
+        k4 ^= key.charCodeAt(i + 14) << 16;
+
+      case 14:
+        k4 ^= key.charCodeAt(i + 13) << 8;
+
+      case 13:
+        k4 ^= key.charCodeAt(i + 12);
+        k4 = _x86Multiply(k4, c4);
+        k4 = _x86Rotl(k4, 18);
+        k4 = _x86Multiply(k4, c1);
+        h4 ^= k4;
+
+      case 12:
+        k3 ^= key.charCodeAt(i + 11) << 24;
+
+      case 11:
+        k3 ^= key.charCodeAt(i + 10) << 16;
+
+      case 10:
+        k3 ^= key.charCodeAt(i + 9) << 8;
+
+      case 9:
+        k3 ^= key.charCodeAt(i + 8);
+        k3 = _x86Multiply(k3, c3);
+        k3 = _x86Rotl(k3, 17);
+        k3 = _x86Multiply(k3, c4);
+        h3 ^= k3;
+
+      case 8:
+        k2 ^= key.charCodeAt(i + 7) << 24;
+
+      case 7:
+        k2 ^= key.charCodeAt(i + 6) << 16;
+
+      case 6:
+        k2 ^= key.charCodeAt(i + 5) << 8;
+
+      case 5:
+        k2 ^= key.charCodeAt(i + 4);
+        k2 = _x86Multiply(k2, c2);
+        k2 = _x86Rotl(k2, 16);
+        k2 = _x86Multiply(k2, c3);
+        h2 ^= k2;
+
+      case 4:
+        k1 ^= key.charCodeAt(i + 3) << 24;
+
+      case 3:
+        k1 ^= key.charCodeAt(i + 2) << 16;
+
+      case 2:
+        k1 ^= key.charCodeAt(i + 1) << 8;
+
+      case 1:
+        k1 ^= key.charCodeAt(i);
+        k1 = _x86Multiply(k1, c1);
+        k1 = _x86Rotl(k1, 15);
+        k1 = _x86Multiply(k1, c2);
+        h1 ^= k1;
+    }
+
+    h1 ^= key.length;
+    h2 ^= key.length;
+    h3 ^= key.length;
+    h4 ^= key.length;
+
+    h1 += h2;
+    h1 += h3;
+    h1 += h4;
+    h2 += h1;
+    h3 += h1;
+    h4 += h1;
+
+    h1 = _x86Fmix(h1);
+    h2 = _x86Fmix(h2);
+    h3 = _x86Fmix(h3);
+    h4 = _x86Fmix(h4);
+
+    h1 += h2;
+    h1 += h3;
+    h1 += h4;
+    h2 += h1;
+    h3 += h1;
+    h4 += h1;
+
+    return ("00000000" + (h1 >>> 0).toString(16)).slice(-8) + ("00000000" + (h2 >>> 0).toString(16)).slice(-8) + ("00000000" + (h3 >>> 0).toString(16)).slice(-8) + ("00000000" + (h4 >>> 0).toString(16)).slice(-8);
+  };
+
+
+  library.x64.hash128 = function (key, seed) {
+    //
+    // Given a string and an optional seed as an int, returns a 128 bit
+    // hash using the x64 flavor of MurmurHash3, as an unsigned hex.
+    //
+
+    key = key || '';
+    seed = seed || 0;
+
+    var remainder = key.length % 16;
+    var bytes = key.length - remainder;
+
+    var h1 = [0, seed];
+    var h2 = [0, seed];
+
+    var k1 = [0, 0];
+    var k2 = [0, 0];
+
+    var c1 = [0x87c37b91, 0x114253d5];
+    var c2 = [0x4cf5ad43, 0x2745937f];
+
+    for (var i = 0; i < bytes; i = i + 16) {
+      k1 = [((key.charCodeAt(i + 4) & 0xff)) | ((key.charCodeAt(i + 5) & 0xff) << 8) | ((key.charCodeAt(i + 6) & 0xff) << 16) | ((key.charCodeAt(i + 7) & 0xff) << 24), ((key.charCodeAt(i) & 0xff)) | ((key.charCodeAt(i + 1) & 0xff) << 8) | ((key.charCodeAt(i + 2) & 0xff) << 16) | ((key.charCodeAt(i + 3) & 0xff) << 24)];
+      k2 = [((key.charCodeAt(i + 12) & 0xff)) | ((key.charCodeAt(i + 13) & 0xff) << 8) | ((key.charCodeAt(i + 14) & 0xff) << 16) | ((key.charCodeAt(i + 15) & 0xff) << 24), ((key.charCodeAt(i + 8) & 0xff)) | ((key.charCodeAt(i + 9) & 0xff) << 8) | ((key.charCodeAt(i + 10) & 0xff) << 16) | ((key.charCodeAt(i + 11) & 0xff) << 24)];
+
+      k1 = _x64Multiply(k1, c1);
+      k1 = _x64Rotl(k1, 31);
+      k1 = _x64Multiply(k1, c2);
+      h1 = _x64Xor(h1, k1);
+
+      h1 = _x64Rotl(h1, 27);
+      h1 = _x64Add(h1, h2);
+      h1 = _x64Add(_x64Multiply(h1, [0, 5]), [0, 0x52dce729]);
+
+      k2 = _x64Multiply(k2, c2);
+      k2 = _x64Rotl(k2, 33);
+      k2 = _x64Multiply(k2, c1);
+      h2 = _x64Xor(h2, k2);
+
+      h2 = _x64Rotl(h2, 31);
+      h2 = _x64Add(h2, h1);
+      h2 = _x64Add(_x64Multiply(h2, [0, 5]), [0, 0x38495ab5]);
+    }
+
+    k1 = [0, 0];
+    k2 = [0, 0];
+
+    switch(remainder) {
+      case 15:
+        k2 = _x64Xor(k2, _x64LeftShift([0, key.charCodeAt(i + 14)], 48));
+
+      case 14:
+        k2 = _x64Xor(k2, _x64LeftShift([0, key.charCodeAt(i + 13)], 40));
+
+      case 13:
+        k2 = _x64Xor(k2, _x64LeftShift([0, key.charCodeAt(i + 12)], 32));
+
+      case 12:
+        k2 = _x64Xor(k2, _x64LeftShift([0, key.charCodeAt(i + 11)], 24));
+
+      case 11:
+        k2 = _x64Xor(k2, _x64LeftShift([0, key.charCodeAt(i + 10)], 16));
+
+      case 10:
+        k2 = _x64Xor(k2, _x64LeftShift([0, key.charCodeAt(i + 9)], 8));
+
+      case 9:
+        k2 = _x64Xor(k2, [0, key.charCodeAt(i + 8)]);
+        k2 = _x64Multiply(k2, c2);
+        k2 = _x64Rotl(k2, 33);
+        k2 = _x64Multiply(k2, c1);
+        h2 = _x64Xor(h2, k2);
+
+      case 8:
+        k1 = _x64Xor(k1, _x64LeftShift([0, key.charCodeAt(i + 7)], 56));
+
+      case 7:
+        k1 = _x64Xor(k1, _x64LeftShift([0, key.charCodeAt(i + 6)], 48));
+
+      case 6:
+        k1 = _x64Xor(k1, _x64LeftShift([0, key.charCodeAt(i + 5)], 40));
+
+      case 5:
+        k1 = _x64Xor(k1, _x64LeftShift([0, key.charCodeAt(i + 4)], 32));
+
+      case 4:
+        k1 = _x64Xor(k1, _x64LeftShift([0, key.charCodeAt(i + 3)], 24));
+
+      case 3:
+        k1 = _x64Xor(k1, _x64LeftShift([0, key.charCodeAt(i + 2)], 16));
+
+      case 2:
+        k1 = _x64Xor(k1, _x64LeftShift([0, key.charCodeAt(i + 1)], 8));
+
+      case 1:
+        k1 = _x64Xor(k1, [0, key.charCodeAt(i)]);
+        k1 = _x64Multiply(k1, c1);
+        k1 = _x64Rotl(k1, 31);
+        k1 = _x64Multiply(k1, c2);
+        h1 = _x64Xor(h1, k1);
+    }
+
+    h1 = _x64Xor(h1, [0, key.length]);
+    h2 = _x64Xor(h2, [0, key.length]);
+
+    h1 = _x64Add(h1, h2);
+    h2 = _x64Add(h2, h1);
+
+    h1 = _x64Fmix(h1);
+    h2 = _x64Fmix(h2);
+
+    h1 = _x64Add(h1, h2);
+    h2 = _x64Add(h2, h1);
+
+    return ("00000000" + (h1[0] >>> 0).toString(16)).slice(-8) + ("00000000" + (h1[1] >>> 0).toString(16)).slice(-8) + ("00000000" + (h2[0] >>> 0).toString(16)).slice(-8) + ("00000000" + (h2[1] >>> 0).toString(16)).slice(-8);
+  };
+
+
+
+
+  // INITIALIZATION
+  // --------------
+
+  // Export murmurHash3 for CommonJS, either as an AMD module or just as part
+  // of the global object.
+  if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = library;
+    }
+
+    exports.murmurHash3 = library;
+  }
+
+  else if (typeof define === 'function' && define.amd) {
+    define([], function() {
+      return library;
+    });
+  }
+
+  else {
+    // Use murmurHash3.noConflict to restore `murmurHash3` back to its
+    // original value. Returns a reference to the library object, to allow
+    // it to be used under a different name.
+    library._murmurHash3 = root.murmurHash3
+
+    library.noConflict = function () {
+      root.murmurHash3 = library._murmurHash3;
+      library._murmurHash3 = undefined;
+      library.noConflict = undefined;
+
+      return library;
+    };
+
+    root.murmurHash3 = library;
+  }
+})(this);
+
+},{}],11:[function(require,module,exports){
+/* eslint-disable node/no-deprecated-api */
+var buffer = require('buffer')
+var Buffer = buffer.Buffer
+
+// alternative to using Object.keys for old browsers
+function copyProps (src, dst) {
+  for (var key in src) {
+    dst[key] = src[key]
+  }
+}
+if (Buffer.from && Buffer.alloc && Buffer.allocUnsafe && Buffer.allocUnsafeSlow) {
+  module.exports = buffer
+} else {
+  // Copy properties from require('buffer')
+  copyProps(buffer, exports)
+  exports.Buffer = SafeBuffer
+}
+
+function SafeBuffer (arg, encodingOrOffset, length) {
+  return Buffer(arg, encodingOrOffset, length)
+}
+
+// Copy static methods from Buffer
+copyProps(Buffer, SafeBuffer)
+
+SafeBuffer.from = function (arg, encodingOrOffset, length) {
+  if (typeof arg === 'number') {
+    throw new TypeError('Argument must not be a number')
+  }
+  return Buffer(arg, encodingOrOffset, length)
+}
+
+SafeBuffer.alloc = function (size, fill, encoding) {
+  if (typeof size !== 'number') {
+    throw new TypeError('Argument must be a number')
+  }
+  var buf = Buffer(size)
+  if (fill !== undefined) {
+    if (typeof encoding === 'string') {
+      buf.fill(fill, encoding)
+    } else {
+      buf.fill(fill)
+    }
+  } else {
+    buf.fill(0)
+  }
+  return buf
+}
+
+SafeBuffer.allocUnsafe = function (size) {
+  if (typeof size !== 'number') {
+    throw new TypeError('Argument must be a number')
+  }
+  return Buffer(size)
+}
+
+SafeBuffer.allocUnsafeSlow = function (size) {
+  if (typeof size !== 'number') {
+    throw new TypeError('Argument must be a number')
+  }
+  return buffer.SlowBuffer(size)
+}
+
+},{"buffer":4}],12:[function(require,module,exports){
+var Buffer = require('safe-buffer').Buffer
+
+// prototype class for hash functions
+function Hash (blockSize, finalSize) {
+  this._block = Buffer.alloc(blockSize)
+  this._finalSize = finalSize
+  this._blockSize = blockSize
+  this._len = 0
+}
+
+Hash.prototype.update = function (data, enc) {
+  if (typeof data === 'string') {
+    enc = enc || 'utf8'
+    data = Buffer.from(data, enc)
+  }
+
+  var block = this._block
+  var blockSize = this._blockSize
+  var length = data.length
+  var accum = this._len
+
+  for (var offset = 0; offset < length;) {
+    var assigned = accum % blockSize
+    var remainder = Math.min(length - offset, blockSize - assigned)
+
+    for (var i = 0; i < remainder; i++) {
+      block[assigned + i] = data[offset + i]
+    }
+
+    accum += remainder
+    offset += remainder
+
+    if ((accum % blockSize) === 0) {
+      this._update(block)
+    }
+  }
+
+  this._len += length
+  return this
+}
+
+Hash.prototype.digest = function (enc) {
+  var rem = this._len % this._blockSize
+
+  this._block[rem] = 0x80
+
+  // zero (rem + 1) trailing bits, where (rem + 1) is the smallest
+  // non-negative solution to the equation (length + 1 + (rem + 1)) === finalSize mod blockSize
+  this._block.fill(0, rem + 1)
+
+  if (rem >= this._finalSize) {
+    this._update(this._block)
+    this._block.fill(0)
+  }
+
+  var bits = this._len * 8
+
+  // uint32
+  if (bits <= 0xffffffff) {
+    this._block.writeUInt32BE(bits, this._blockSize - 4)
+
+  // uint64
+  } else {
+    var lowBits = (bits & 0xffffffff) >>> 0
+    var highBits = (bits - lowBits) / 0x100000000
+
+    this._block.writeUInt32BE(highBits, this._blockSize - 8)
+    this._block.writeUInt32BE(lowBits, this._blockSize - 4)
+  }
+
+  this._update(this._block)
+  var hash = this._hash()
+
+  return enc ? hash.toString(enc) : hash
+}
+
+Hash.prototype._update = function () {
+  throw new Error('_update must be implemented by subclass')
+}
+
+module.exports = Hash
+
+},{"safe-buffer":11}],13:[function(require,module,exports){
+/**
+ * A JavaScript implementation of the Secure Hash Algorithm, SHA-256, as defined
+ * in FIPS 180-2
+ * Version 2.2-beta Copyright Angel Marin, Paul Johnston 2000 - 2009.
+ * Other contributors: Greg Holt, Andrew Kepert, Ydnar, Lostinet
+ *
+ */
+
+var inherits = require('inherits')
+var Hash = require('./hash')
+var Buffer = require('safe-buffer').Buffer
+
+var K = [
+  0x428A2F98, 0x71374491, 0xB5C0FBCF, 0xE9B5DBA5,
+  0x3956C25B, 0x59F111F1, 0x923F82A4, 0xAB1C5ED5,
+  0xD807AA98, 0x12835B01, 0x243185BE, 0x550C7DC3,
+  0x72BE5D74, 0x80DEB1FE, 0x9BDC06A7, 0xC19BF174,
+  0xE49B69C1, 0xEFBE4786, 0x0FC19DC6, 0x240CA1CC,
+  0x2DE92C6F, 0x4A7484AA, 0x5CB0A9DC, 0x76F988DA,
+  0x983E5152, 0xA831C66D, 0xB00327C8, 0xBF597FC7,
+  0xC6E00BF3, 0xD5A79147, 0x06CA6351, 0x14292967,
+  0x27B70A85, 0x2E1B2138, 0x4D2C6DFC, 0x53380D13,
+  0x650A7354, 0x766A0ABB, 0x81C2C92E, 0x92722C85,
+  0xA2BFE8A1, 0xA81A664B, 0xC24B8B70, 0xC76C51A3,
+  0xD192E819, 0xD6990624, 0xF40E3585, 0x106AA070,
+  0x19A4C116, 0x1E376C08, 0x2748774C, 0x34B0BCB5,
+  0x391C0CB3, 0x4ED8AA4A, 0x5B9CCA4F, 0x682E6FF3,
+  0x748F82EE, 0x78A5636F, 0x84C87814, 0x8CC70208,
+  0x90BEFFFA, 0xA4506CEB, 0xBEF9A3F7, 0xC67178F2
+]
+
+var W = new Array(64)
+
+function Sha256 () {
+  this.init()
+
+  this._w = W // new Array(64)
+
+  Hash.call(this, 64, 56)
+}
+
+inherits(Sha256, Hash)
+
+Sha256.prototype.init = function () {
+  this._a = 0x6a09e667
+  this._b = 0xbb67ae85
+  this._c = 0x3c6ef372
+  this._d = 0xa54ff53a
+  this._e = 0x510e527f
+  this._f = 0x9b05688c
+  this._g = 0x1f83d9ab
+  this._h = 0x5be0cd19
+
+  return this
+}
+
+function ch (x, y, z) {
+  return z ^ (x & (y ^ z))
+}
+
+function maj (x, y, z) {
+  return (x & y) | (z & (x | y))
+}
+
+function sigma0 (x) {
+  return (x >>> 2 | x << 30) ^ (x >>> 13 | x << 19) ^ (x >>> 22 | x << 10)
+}
+
+function sigma1 (x) {
+  return (x >>> 6 | x << 26) ^ (x >>> 11 | x << 21) ^ (x >>> 25 | x << 7)
+}
+
+function gamma0 (x) {
+  return (x >>> 7 | x << 25) ^ (x >>> 18 | x << 14) ^ (x >>> 3)
+}
+
+function gamma1 (x) {
+  return (x >>> 17 | x << 15) ^ (x >>> 19 | x << 13) ^ (x >>> 10)
+}
+
+Sha256.prototype._update = function (M) {
+  var W = this._w
+
+  var a = this._a | 0
+  var b = this._b | 0
+  var c = this._c | 0
+  var d = this._d | 0
+  var e = this._e | 0
+  var f = this._f | 0
+  var g = this._g | 0
+  var h = this._h | 0
+
+  for (var i = 0; i < 16; ++i) W[i] = M.readInt32BE(i * 4)
+  for (; i < 64; ++i) W[i] = (gamma1(W[i - 2]) + W[i - 7] + gamma0(W[i - 15]) + W[i - 16]) | 0
+
+  for (var j = 0; j < 64; ++j) {
+    var T1 = (h + sigma1(e) + ch(e, f, g) + K[j] + W[j]) | 0
+    var T2 = (sigma0(a) + maj(a, b, c)) | 0
+
+    h = g
+    g = f
+    f = e
+    e = (d + T1) | 0
+    d = c
+    c = b
+    b = a
+    a = (T1 + T2) | 0
+  }
+
+  this._a = (a + this._a) | 0
+  this._b = (b + this._b) | 0
+  this._c = (c + this._c) | 0
+  this._d = (d + this._d) | 0
+  this._e = (e + this._e) | 0
+  this._f = (f + this._f) | 0
+  this._g = (g + this._g) | 0
+  this._h = (h + this._h) | 0
+}
+
+Sha256.prototype._hash = function () {
+  var H = Buffer.allocUnsafe(32)
+
+  H.writeInt32BE(this._a, 0)
+  H.writeInt32BE(this._b, 4)
+  H.writeInt32BE(this._c, 8)
+  H.writeInt32BE(this._d, 12)
+  H.writeInt32BE(this._e, 16)
+  H.writeInt32BE(this._f, 20)
+  H.writeInt32BE(this._g, 24)
+  H.writeInt32BE(this._h, 28)
+
+  return H
+}
+
+module.exports = Sha256
+
+},{"./hash":12,"inherits":6,"safe-buffer":11}],14:[function(require,module,exports){
 // TODO(jeff): Figure out how to produce a UMD module.
 /* global require:false */
 (function() {
@@ -2766,9 +3112,12 @@ module.exports = Array.isArray || function (arr) {
   };
 })();
 
-},{".":11}],11:[function(require,module,exports){
+},{".":15}],15:[function(require,module,exports){
 (function (Buffer){
-var BloomFilter = require('bloom-filter-remixed');
+const BloomFilter = require('bloom-filter-remixed');
+const sha256 = require('sha.js/sha256')
+
+const MAX_UINT_32 = Math.pow(2, 32);
 
 /**
  * Deserializes a user gate and checks users against the gate.
@@ -2824,6 +3173,10 @@ Object.assign(UserGate.prototype, {
     return this._matchesSample(user) || this._matchesList(user);
   },
 
+  allowsUniform: function(user) {
+    return (this._matchesUniformSample(user) || this._matchesList(user));
+  },
+
   _matchesList: function(user) {
     if (!this._list) return false;
 
@@ -2831,18 +3184,39 @@ Object.assign(UserGate.prototype, {
   },
 
   _matchesSample: function(user) {
-    if (!this._sample) return false;
+    if (!this._sample || !((this._sample >= 0) && (this._sample <= 1))) return false;
 
     // See if the user begins with a character in the sample set.
-    var effectiveCharacterSet = this._sampleCharacterSet.slice(
+    const effectiveCharacterSet = this._sampleCharacterSet.slice(
       0, Math.round(this._sampleCharacterSet.length * this._sample));
 
-    var userMatches = new RegExp('^[' + effectiveCharacterSet + ']', 'i').test(user);
+    const userMatches = new RegExp('^[' + effectiveCharacterSet + ']', 'i').test(user);
     return userMatches;
+  },
+
+  _matchesUniformSample: function(user) {
+    if (!this._sample || !((this._sample >= 0) && (this._sample <= 1))) return false;
+
+    // We've got to project `user` onto the sample space (i.e. convert it to a number between 0 and
+    // 1) in a way that is a) deterministic b) uniform. We do this by hashing the user, converting it
+    // to an unsigned 32-bit integer, and then normalizing by the size of the max UInt32--essentially
+    // this solution https://stats.stackexchange.com/a/70884 but with only two buckets ("in trial",
+    // or "not in trial").
+    const hash = new sha256();
+    const buf = hash.update(user).digest();
+
+    // This method of conversion-to-integer will truncate the hash to the first four bytes. But hashes
+    // are designed to be random in each individual bit https://crypto.stackexchange.com/a/26859, so
+    // this is no less uniform--just with greater likelihood of collisions, which is fine for us since
+    // we're collapsing the distribution onto two buckets anyway.
+    const uint32 = Buffer.from(buf).readUInt32BE(0);
+
+    const sample = uint32 / MAX_UINT_32;
+    return sample <= this._sample;
   }
 });
 
 module.exports = UserGate;
 
 }).call(this,require("buffer").Buffer)
-},{"bloom-filter-remixed":2,"buffer":6}]},{},[10]);
+},{"bloom-filter-remixed":3,"buffer":4,"sha.js/sha256":13}]},{},[14]);
