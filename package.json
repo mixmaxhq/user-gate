@@ -11,7 +11,7 @@
   "main": "src/index.js",
   "scripts": {
     "test": "jasmine",
-    "build": "browserify src/gate/exports.js -o dist/bundle.js && browserify src/gate/exports.js -o dist/bundle.min.js -g uglifyify --debug",
+    "build": "browserify src/gate/exports.js -t [ babelify --presets [ @babel/preset-env ] ] -o dist/bundle.js && browserify src/gate/exports.js -t [ babelify --presets [ @babel/preset-env ] ] -o dist/bundle.min.js -g uglifyify --debug",
     "build-test": "watchify spec/gate/indexSpec.js -o spec/gate/spec.bundle.js",
     "open-test": "open spec/gate/jasmine.html"
   },
@@ -33,9 +33,12 @@
   },
   "homepage": "https://github.com/mixmaxhq/user-gate#readme",
   "devDependencies": {
+    "@babel/core": "^7.4.4",
+    "@babel/preset-env": "^7.4.4",
+    "babelify": "^10.0.0",
     "browserify": "^13.1.0",
     "jasmine": "^2.4.1",
-    "mock-fs": "4.9.0",
+    "mock-fs": "^4.9.0",
     "uglifyify": "^3.0.4",
     "watchify": "^3.7.0"
   },
