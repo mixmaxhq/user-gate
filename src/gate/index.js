@@ -3,6 +3,10 @@ const sha256 = require('sha.js/sha256')
 
 const MAX_UINT_32 = Math.pow(2, 32);
 
+function _isFalseyVal(val) {
+  return val === undefined || val === null;
+}
+
 /**
  * Deserializes a user gate and checks users against the gate.
  *
@@ -14,7 +18,8 @@ const MAX_UINT_32 = Math.pow(2, 32);
  *     user identifiers could begin. Defaults to `'abcdefghijklmnopqrstuvwxyz'` which works for
  *     identifiers that are emails. Case-insensitive. See `UserGate#allows` for how this is used.
  */
-function UserGate(encodedGate, options) {
+class UserGate {
+  constructor(encodedGate, options) {
   encodedGate = encodedGate || {};
 
   if (encodedGate.list) {
@@ -25,9 +30,8 @@ function UserGate(encodedGate, options) {
 
   options = options || {};
   this._sampleCharacterSet = options.sampleCharacterSet || 'abcdefghijklmnopqrstuvwxyz';
-}
+  }
 
-Object.assign(UserGate.prototype, {
   /**
    * Checks whether _user_ (a string identifier similar to those encoded) is allowed
    * through the gate, either because:
@@ -52,23 +56,23 @@ Object.assign(UserGate.prototype, {
    *
    * @return {Boolean} `true` if _user_ is allowed through the gate, `false` otherwise.
    */
-  allows: function(user) {
+  allows(user) {
     // Micro-optimization: check `_matchesSample` first because it's faster.
     return this._matchesSample(user) || this._matchesList(user);
-  },
+  }
 
-  allowsUniform: function(user) {
+  allowsUniform(user) {
     return (this._matchesUniformSample(user) || this._matchesList(user));
-  },
+  }
 
-  _matchesList: function(user) {
+  _matchesList(user) {
     if (!this._list) return false;
 
     return this._list.contains(user);
-  },
+  }
 
-  _matchesSample: function(user) {
-    if (!this._sample || !((this._sample >= 0) && (this._sample <= 1))) return false;
+  _matchesSample(user) {
+    if (_isFalseyVal(this._sample) || !((this._sample >= 0) && (this._sample <= 1))) return false;
 
     // See if the user begins with a character in the sample set.
     const effectiveCharacterSet = this._sampleCharacterSet.slice(
@@ -76,10 +80,10 @@ Object.assign(UserGate.prototype, {
 
     const userMatches = new RegExp('^[' + effectiveCharacterSet + ']', 'i').test(user);
     return userMatches;
-  },
+  }
 
-  _matchesUniformSample: function(user) {
-    if (!this._sample || !((this._sample >= 0) && (this._sample <= 1))) return false;
+  _matchesUniformSample(user) {
+    if (_isFalseyVal(this._sample) || !((this._sample >= 0) && (this._sample <= 1))) return false;
 
     // We've got to project `user` onto the sample space (i.e. convert it to a number between 0 and
     // 1) in a way that is a) deterministic b) uniform. We do this by hashing the user, converting it
@@ -98,6 +102,6 @@ Object.assign(UserGate.prototype, {
     const sample = uint32 / MAX_UINT_32;
     return sample <= this._sample;
   }
-});
+}
 
 module.exports = UserGate;
