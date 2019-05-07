@@ -64,7 +64,7 @@ class UserGate {
   }
 
   _matchesSample(user) {
-    if ((this._sample === undefined || this._sample === null) || !((this._sample >= 0) && (this._sample <= 1))) return false;
+    if ((typeof this._sample !== 'number') || !((this._sample >= 0) && (this._sample <= 1))) return false;
 
     if (!user) return false;
 

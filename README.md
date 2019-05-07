@@ -278,9 +278,7 @@ space - this is both deterministic and uniformly random.
 Checking against the list requires an exact match. However, sampling is
 case-insensitive.
 
-**In v3.x**, this returns `true` if _user_ is allowed through the gate, `false` otherwise.
-
-**In v2.x**, this returns `true` if _user_ is allowed through the gate, `false` otherwise.
+**In v2.x and above**, this returns `true` if _user_ is allowed through the gate, `false` otherwise.
 
 **In v1.x**, this returns a [promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)
 that resolves to those Boolean values.
