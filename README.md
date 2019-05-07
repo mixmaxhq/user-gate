@@ -118,9 +118,16 @@ user-gate encode --list users.json --list-size 100 --sample 0.5 gate.json
 
 In the browser:
 
+If your application is capable of importing ES6 modules:
+
+```javascript
+import UserGate from 'user-gate';
+```
+
+Alternatively,
+
 ```html
-<!-- Loads `UserGate` into `window`. There is also a minified version available, `dist/bundle.min.js`.
-If anyone would like to produce a UMD version, a pull request would be very welcome! -->
+<!-- Loads `UserGate` into `window`. There is also a minified version available, `dist/bundle.min.js`.-->
 <script src="node_modules/user-gate/dist/bundle.js"></script>
 
 <script type="text/javascript">
