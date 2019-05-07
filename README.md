@@ -262,10 +262,7 @@ _encodedGate_ is JSON produced by [`UserGateEncoder`](#usergateencoder).
 
 _options_:
 
-* _sampleCharacterSet_: The string of characters with which the unencoded user
-identifiers could begin. Defaults to `'abcdefghijklmnopqrstuvwxyz'` which works
-for identifiers that are emails. Case-insensitive. See
-[`UserGate#allows`](#usergateallowsuser) for how this is used.
+* sample: the percentage of users we wish to let in.
 
 #### UserGate#allows(user)
 
@@ -275,7 +272,12 @@ through the gate, either because:
 * they're on the list
 * they're part of the first _sample_ users
 
-Sampling is done by checking the character with which _user_ begins. For example,
+Sampling is done by hashing the _user_ string and projecting it onto a sample
+space, by converting it to an unsigned 32 bit integer, and then normalizing by
+the size of the max UInt32 (essentially [this solution](https://stats.stackexchange.com/a/70884), but with only two
+buckets ("matches", "doesn't match").
+
+checking the character with which _user_ begins. For example,
 if _sample_ is `0.5` and the gate uses the default
 [_sampleCharacterSet_](#newusergateencodedgate-options), _user_ would be allowed
 through the gate if it began with any character between `a-n` (halfway through
@@ -288,6 +290,8 @@ the gate, even if they reload, or they never will.
 
 Checking against the list requires an exact match. However, sampling is
 case-insensitive.
+
+**In v3.x**, this returns `true` if _user_ is allowed through the gate, `false` otherwise.
 
 **In v2.x**, this returns `true` if _user_ is allowed through the gate, `false` otherwise.
 
