@@ -6,7 +6,8 @@
   "browser": "dist/bundle.min.js",
   "files": [
     "dist",
-    "src"
+    "src",
+    "bin"
   ],
   "main": "src/index.js",
   "scripts": {
