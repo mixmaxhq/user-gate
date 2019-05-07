@@ -1,6 +1,6 @@
 {
   "name": "user-gate",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "Server-less feature gates that don't compromise users' privacy.",
   "bin": "bin/user-gate.js",
   "browser": "dist/bundle.min.js",
