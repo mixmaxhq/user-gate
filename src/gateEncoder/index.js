@@ -21,21 +21,21 @@ var es = require('event-stream');
  *     the default (1 out of 100 users should be falsely allowed). Specifying a smaller rate will
  *     result in a larger encoded gate. 0 is unachievable.
  */
-function UserGateEncoder(gate, options) {
-  gate = gate || {};
+class UserGateEncoder {
+  constructor(gate, options) {
+    gate = gate || {};
 
-  // We defer creating the filter from the list until the user calls `toJSON` or `toStream` to see
-  // if they'll provide more users (via `toStream`) since we need to properly estimate the filter size.
-  this._list = gate.list || [];
-  this._sample = gate.sample || 0;
+    // We defer creating the filter from the list until the user calls `toJSON` or `toStream` to see
+    // if they'll provide more users (via `toStream`) since we need to properly estimate the filter size.
+    this._list = gate.list || [];
+    this._sample = gate.sample || 0;
 
-  options = options || {};
-  this._listFalsePositiveRate = options.listFalsePositiveRate || 0.01;
+    options = options || {};
+    this._listFalsePositiveRate = options.listFalsePositiveRate || 0.01;
 
-  assert(this._listFalsePositiveRate > 0, '`listFalsePositiveRate` must be greater than 0.');
-}
+    assert(this._listFalsePositiveRate > 0, '`listFalsePositiveRate` must be greater than 0.');
+  }
 
-Object.assign(UserGateEncoder.prototype, {
   /**
    * Returns the encoded gate as JSON.
    *
@@ -44,7 +44,7 @@ Object.assign(UserGateEncoder.prototype, {
    *
    * @return {Object} The JSON-encoding of the gate.
    */
-  toJSON: function() {
+  toJSON() {
     if (!this._filter) {
       this._filter = this._createBloomFilter(this._list.length);
       this._list.forEach((user) => this._filter.insert(user));
@@ -58,7 +58,7 @@ Object.assign(UserGateEncoder.prototype, {
       list: filterAsObj,
       sample: this._sample
     };
-  },
+  }
 
   /**
    * Returns a stream _to which_ you can write users, and _from which_ you can read
@@ -74,7 +74,7 @@ Object.assign(UserGateEncoder.prototype, {
    *
    * @return {stream.Duplex}
    */
-  toStream: function(options) {
+  toStream(options) {
     options = options || {};
 
     // Only end the stream (see below) if the client's not going to write any additional users to it.
@@ -99,13 +99,13 @@ Object.assign(UserGateEncoder.prototype, {
     es.readArray(this._list).pipe(stream, { end: endStream });
 
     return stream;
-  },
+  }
 
-  _createBloomFilter: function(numberOfElements) {
+  _createBloomFilter(numberOfElements) {
     // The filter must be initialized with `numberOfElements >= 1`.
     numberOfElements = numberOfElements || 1;
     return BloomFilter.create(numberOfElements, this._listFalsePositiveRate);
   }
-});
+}
 
 module.exports = UserGateEncoder;

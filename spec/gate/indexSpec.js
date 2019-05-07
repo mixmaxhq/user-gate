@@ -1,6 +1,7 @@
 /* jshint esnext:true */
 
 var UserGate = require('../../src/gate');
+const emails = require('../fixtures/emails');
 
 describe('UserGate', function() {
   it('does not allow if neither `list` nor `sample` are specified', function() {
@@ -49,21 +50,44 @@ describe('UserGate', function() {
       expect(gate.allows('Alice@mixmax.com')).toBe(true);
     });
 
-    it('allows the character set to be configured', function() {
-      var defaultGate = new UserGate({
-        sample: 0.5
-      });
+    it('should be deterministic', () => {
+      const gate = new UserGate({ sample: 0.5 });
+      const aliceIsAllowed = gate.allows('alice@mixmax.com');
+      for (let i = 0; i < 1000; i++) {
+        expect(gate.allows('alice@mixmax.com')).toBe(aliceIsAllowed);
+      }
 
-      var numberGate = new UserGate({
-        sample: 0.5,
-      }, {
-        sampleCharacterSet: '12'
-      });
+      const ziggyIsAllowed = gate.allows('ziggy@mixmax.com');
+      for (i = 0; i < 1000; i++) {
+        expect(gate.allows('ziggy@mixmax.com')).toBe(ziggyIsAllowed);
+      }
+    });
 
-      expect(defaultGate.allows('1')).toBe(false);
-      expect(defaultGate.allows('2')).toBe(false);
-      expect(numberGate.allows('1')).toBe(true);
-      expect(numberGate.allows('2')).toBe(false);
+    it('should not allow anyone through the gate with a sample of 0', () => {
+      const gate = new UserGate({ sample: 0 });
+      expect(gate.allows('alice@mixmax.com')).toBe(false);
+      expect(gate.allows('ziggy@mixmax.com')).toBe(false);
+    });
+
+    it('should allow anyone through the gate with a sample of 1', () => {
+      const gate = new UserGate({ sample: 1 });
+      expect(gate.allows('alice@mixmax.com')).toBe(true);
+      expect(gate.allows('ziggy@mixmax.com')).toBe(true);
+    });
+
+    it('should be accurate', async () => {
+      for (const sampleRate of [0.25, 0.5, 0.75]) {
+        let sampleSize = emails.length;
+        let gate = new UserGate({ sample: sampleRate });
+
+        let inTrial = 0;
+        for (const email of emails) {
+          if (gate.allows(email)) {
+            inTrial++;
+          }
+        }
+        expect(inTrial / sampleSize).toBeCloseTo(sampleRate, 1);
+      }
     });
   });
 
@@ -78,7 +102,7 @@ describe('UserGate', function() {
     });
 
     it('works if user matches sample and not list', function() {
-      expect(gate.allows('alice@mixmax.com')).toBe(true);
+      expect(gate.allows('grace@mixmax.com')).toBe(true);
     });
 
     it('works if user matches neither', function() {

@@ -40,10 +40,7 @@ npm install user-gate -g
 For checking the list:
 
 ```sh
-# In the browser:
-bower install user-gate --save
-
-# From Node:
+# From both Node and the browser:
 npm install user-gate --save
 
 # Using the CLI tool:
@@ -121,10 +118,17 @@ user-gate encode --list users.json --list-size 100 --sample 0.5 gate.json
 
 In the browser:
 
+If your application is capable of importing ES6 modules:
+
+```javascript
+import UserGate from 'user-gate';
+```
+
+Alternatively,
+
 ```html
-<!-- Loads `UserGate` into `window`. There is also a minified version available, `dist/bundle.min.js`.
-If anyone would like to produce a UMD version, a pull request would be very welcome! -->
-<script src="bower_components/user-gate/dist/bundle.js"></script>
+<!-- Loads `UserGate` into `window`. There is also a minified version available, `dist/bundle.min.js`.-->
+<script src="node_modules/user-gate/dist/bundle.js"></script>
 
 <script type="text/javascript">
   // Assuming that you have jQuery for the purposes of this example.
@@ -265,10 +269,7 @@ _encodedGate_ is JSON produced by [`UserGateEncoder`](#usergateencoder).
 
 _options_:
 
-* _sampleCharacterSet_: The string of characters with which the unencoded user
-identifiers could begin. Defaults to `'abcdefghijklmnopqrstuvwxyz'` which works
-for identifiers that are emails. Case-insensitive. See
-[`UserGate#allows`](#usergateallowsuser) for how this is used.
+* sample: the percentage of users we wish to let in.
 
 #### UserGate#allows(user)
 
@@ -278,21 +279,13 @@ through the gate, either because:
 * they're on the list
 * they're part of the first _sample_ users
 
-Sampling is done by checking the character with which _user_ begins. For example,
-if _sample_ is `0.5` and the gate uses the default
-[_sampleCharacterSet_](#newusergateencodedgate-options), _user_ would be allowed
-through the gate if it began with any character between `a-n` (halfway through
-the alphabet).
-
-Users are unlikely to be uniformly distributed over _sampleCharacterSet_ and
-thus a _sample_ of `0.5` won't exactly select for 50% of users. However, this
-sampling technique is deterministic: a user will either always be allowed through
-the gate, even if they reload, or they never will.
+Sampling is done by hashing the _user_ string and projecting it onto a sample
+space - this is both deterministic and uniformly random.
 
 Checking against the list requires an exact match. However, sampling is
 case-insensitive.
 
-**In v2.x**, this returns `true` if _user_ is allowed through the gate, `false` otherwise.
+**In v2.x and above**, this returns `true` if _user_ is allowed through the gate, `false` otherwise.
 
 **In v1.x**, this returns a [promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)
 that resolves to those Boolean values.
