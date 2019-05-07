@@ -273,20 +273,7 @@ through the gate, either because:
 * they're part of the first _sample_ users
 
 Sampling is done by hashing the _user_ string and projecting it onto a sample
-space, by converting it to an unsigned 32 bit integer, and then normalizing by
-the size of the max UInt32 (essentially [this solution](https://stats.stackexchange.com/a/70884), but with only two
-buckets ("matches", "doesn't match").
-
-checking the character with which _user_ begins. For example,
-if _sample_ is `0.5` and the gate uses the default
-[_sampleCharacterSet_](#newusergateencodedgate-options), _user_ would be allowed
-through the gate if it began with any character between `a-n` (halfway through
-the alphabet).
-
-Users are unlikely to be uniformly distributed over _sampleCharacterSet_ and
-thus a _sample_ of `0.5` won't exactly select for 50% of users. However, this
-sampling technique is deterministic: a user will either always be allowed through
-the gate, even if they reload, or they never will.
+space - this is both deterministic and uniformly random.
 
 Checking against the list requires an exact match. However, sampling is
 case-insensitive.
