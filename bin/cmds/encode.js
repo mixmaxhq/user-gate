@@ -21,12 +21,17 @@ exports.builder = function(yargs) {
         describe: 'The proportion of users to allow independent of the list.',
         default: 0,
         type: 'number'
+      },
+      'false-positive-rate': {
+        describe: 'The false positive rate for allowing users that are not on the list.',
+        default: 0.01,
+        type: 'number'
       }
     })
     .example('$0 encode gate.json',
       'Encodes a gate that disallows all users.')
-    .example('$0 encode --list users.json --list-size 1000 gate.json',
-      'Encodes a gate that allows the specified ~1000 users.')
+    .example('$0 encode --list users.json --list-size 1000 --false-positive-rate 0.005 gate.json',
+      'Encodes a gate that allows the specified ~1000 users with a false positive rate of 0.5%.')
     .example('$0 encode --sample 0.5 gate.json',
       'Encodes a gate that allows half of users.')
     .example('$0 encode --list users.json --list-size 1000 --sample 0.5 gate.json',
@@ -35,7 +40,8 @@ exports.builder = function(yargs) {
 
 exports.handler = function(argv) {
   var gateEncoder = new UserGateEncoder({
-    sample: argv.sample
+    sample: argv.sample,
+    listFalsePositiveRate: argv['false-positive-rate']
   });
 
   var listFile = argv.list;
