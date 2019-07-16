@@ -44,8 +44,8 @@
     "watchify": "^3.7.0"
   },
   "dependencies": {
+    "@mixmaxhq/bloom-filter": "^0.3.0",
     "JSONStream": "^1.1.4",
-    "bloom-filter-remixed": "semaj/bloom-filter#c4c4c56da274053124c137e03d29700f8cc52d1e",
     "event-stream": "^3.3.4",
     "sha.js": "^2.4.11",
     "yargs": "^4.8.1"

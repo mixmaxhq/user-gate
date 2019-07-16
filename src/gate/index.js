@@ -1,4 +1,4 @@
-const BloomFilter = require('bloom-filter-remixed');
+const BloomFilter = require('@mixmaxhq/bloom-filter');
 /**
  * `sha.js` is an isomorphic hashing library that implements its hashing functions synchronously.
  *  This is important for our usage of it, as we wish to support this library without resorting to

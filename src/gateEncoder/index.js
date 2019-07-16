@@ -1,5 +1,5 @@
 var assert = require('assert');
-var BloomFilter = require('bloom-filter-remixed');
+var BloomFilter = require('@mixmaxhq/bloom-filter');
 var es = require('event-stream');
 
 /**

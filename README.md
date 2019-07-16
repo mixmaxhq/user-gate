@@ -251,7 +251,7 @@ gateEncoder.toStream({end: true})
   .pipe(fs.createWriteStream('gate.json'));
 ```
 
-**In v2.x**, pass `{ numUsers: 100 }` to indicate that you plan to write ~100
+**In v2.x**, pass `{ numUsers: 100 }` to indicate that you plan to write &#x7e;100
 users to the stream. Passing a roughly-accurate estimate is crucial to enforcing
 the desired false positive rate.
 
@@ -353,9 +353,14 @@ In addition, was developed by a company (Bitpay) to conform to a spec ([Bitcoin
 connection filtering](https://github.com/bitcoin/bips/blob/master/bip-0037.mediawiki))
 which gave us confidence in its reliability.
 
-We use @semaj' fork, specifically its [`divergence` branch](https://github.com/bitpay/bloom-filter/compare/master...semaj:divergence),
-because it seems to offer [better performance](https://github.com/bitpay/bloom-filter/pull/4) and even greater [correctness](https://github.com/bitpay/bloom-filter/commit/26fc59c6b8aeec715146314d2ccaee604d5e91b5), at the cost of a somewhat larger size
-when built for the browser, due to its dependency on a `Buffer` polyfill.
+We use @semaj's fork, specifically its
+[`divergence` branch](https://github.com/bitpay/bloom-filter/compare/master...semaj:divergence),
+because it seems to offer [better performance](https://github.com/bitpay/bloom-filter/pull/4) and
+even greater
+[correctness](https://github.com/bitpay/bloom-filter/commit/26fc59c6b8aeec715146314d2ccaee604d5e91b5),
+at the cost of a somewhat larger size when built for the browser, due to its dependency on a
+`Buffer` polyfill. We republished it as `@mixmaxhq/bloom-filter` to avoid `npm`'s problems with
+dependencies pulled in from GitHub.
 
 The authors of this library are not cryptography experts. If you feel that this
 choice is incorrect in some way, please [open an issue](https://github.com/mixmaxhq/user-gate/issues/new).
@@ -377,6 +382,7 @@ page to re-run the tests.
 
 ## Release History
 
+* 2.0.2 Switch to `@mixmaxhq/bloom-filter` - no functional changes
 * 2.0.1 Support strict mode environments
 * 2.0.0 Switch to encoding users using Bloom filters. [More details.](#user-encoding-scheme)
 * 1.0.2 Simplify usage by removing unnecessary warning from README (no code changes).
