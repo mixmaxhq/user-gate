@@ -1,5 +1,7 @@
 ## Release History
 
+* 3.1.2 Use `@mixmaxhq/bloom-filter`
+
 * 3.1.1 Add false positive CLI arg
 
 * 3.1.0 tell npm to publish bin alongside src and dist.
