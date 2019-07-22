@@ -5,16 +5,17 @@
   "bin": "bin/user-gate.js",
   "browser": "dist/bundle.min.js",
   "files": [
-    "dist",
-    "src",
-    "bin"
+    "bin/**/*.js",
+    "dist/**/*.js",
+    "src/**/*.js"
   ],
   "main": "src/index.js",
   "scripts": {
     "test": "jasmine",
     "build": "browserify src/gate/index.js --standalone UserGate -t [ babelify --presets [ @babel/preset-env ] ] -o dist/bundle.js && browserify src/gate/index.js --standalone UserGate -t [ babelify --presets [ @babel/preset-env ] ] -o dist/bundle.min.js -g uglifyify --debug",
     "build-test": "watchify spec/gate/indexSpec.js -o spec/gate/spec.bundle.js",
-    "open-test": "open spec/gate/jasmine.html"
+    "open-test": "open spec/gate/jasmine.html",
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
