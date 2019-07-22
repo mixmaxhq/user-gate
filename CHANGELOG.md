@@ -1,5 +1,7 @@
 ## Release History
 
+* 3.1.3 Fix build on publish
+
 * 3.1.2 Use `@mixmaxhq/bloom-filter`
 
 * 3.1.1 Add false positive CLI arg
