@@ -1,5 +1,3 @@
-/* jshint esnext:true */
-
 var UserGate = require('../../src/gate');
 const emails = require('../fixtures/emails');
 
