@@ -6,5 +6,4 @@ var argv = require('yargs')
   .demand(1, 'Must provide a valid command')
   .strict()
   .help('h')
-  .alias('h', 'help')
-  .argv;
+  .alias('h', 'help').argv;

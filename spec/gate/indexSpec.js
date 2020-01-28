@@ -10,7 +10,7 @@ describe('UserGate', function() {
   describe('list', function() {
     it('matches the specified user', function() {
       var gate = new UserGate({
-        list: { vData: { type: 'Buffer', data: [ 113 ] }, nHashFuncs: 5, nTweak: 0, nFlags: 0 }
+        list: { vData: { type: 'Buffer', data: [113] }, nHashFuncs: 5, nTweak: 0, nFlags: 0 },
       });
 
       expect(gate.allows('jeff@mixmax.com')).toBe(true);
@@ -19,7 +19,7 @@ describe('UserGate', function() {
 
     it('matches multiple users', function() {
       var gate = new UserGate({
-        list: { vData: { type: 'Buffer', data: [ 121, 48 ] }, nHashFuncs: 5, nTweak: 0, nFlags: 0 }
+        list: { vData: { type: 'Buffer', data: [121, 48] }, nHashFuncs: 5, nTweak: 0, nFlags: 0 },
       });
 
       expect(gate.allows('jeff@mixmax.com')).toBe(true);
@@ -30,7 +30,7 @@ describe('UserGate', function() {
   describe('sample', function() {
     it('works', function() {
       var gate = new UserGate({
-        sample: 0.5
+        sample: 0.5,
       });
 
       expect(gate.allows('alice@mixmax.com')).toBe(true);
@@ -41,7 +41,7 @@ describe('UserGate', function() {
 
     it('is case-insensitive', function() {
       var gate = new UserGate({
-        sample: 0.5
+        sample: 0.5,
       });
 
       expect(gate.allows('alice@mixmax.com')).toBe(true);
@@ -75,8 +75,8 @@ describe('UserGate', function() {
 
     it('should be accurate', async () => {
       for (const sampleRate of [0.25, 0.5, 0.75]) {
-        let sampleSize = emails.length;
-        let gate = new UserGate({ sample: sampleRate });
+        const sampleSize = emails.length;
+        const gate = new UserGate({ sample: sampleRate });
 
         let inTrial = 0;
         for (const email of emails) {
@@ -91,8 +91,8 @@ describe('UserGate', function() {
 
   describe('both', function() {
     var gate = new UserGate({
-      list: { vData: { type: 'Buffer', data: [ 121, 48 ] }, nHashFuncs: 5, nTweak: 0, nFlags: 0 },
-      sample: 0.25
+      list: { vData: { type: 'Buffer', data: [121, 48] }, nHashFuncs: 5, nTweak: 0, nFlags: 0 },
+      sample: 0.25,
     });
 
     it('works if user matches list and not sample', function() {

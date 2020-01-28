@@ -56,7 +56,7 @@ class UserGateEncoder {
 
     return {
       list: filterAsObj,
-      sample: this._sample
+      sample: this._sample,
     };
   }
 
@@ -93,7 +93,8 @@ class UserGateEncoder {
       function end() {
         this.push(JSON.stringify(self));
         this.push(null);
-      });
+      }
+    );
 
     // Inject the initial users.
     es.readArray(this._list).pipe(stream, { end: endStream });
