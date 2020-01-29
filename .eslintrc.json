@@ -4,6 +4,9 @@
     "commonjs": true,
     "shared-node-browser": true
   },
+  "globals": {
+    "Buffer": "readonly"
+  },
   "overrides": [
     {
       "files": ["bin/**"],

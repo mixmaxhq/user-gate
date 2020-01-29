@@ -56,7 +56,7 @@ describe('UserGate', function() {
       }
 
       const ziggyIsAllowed = gate.allows('ziggy@mixmax.com');
-      for (i = 0; i < 1000; i++) {
+      for (let i = 0; i < 1000; i++) {
         expect(gate.allows('ziggy@mixmax.com')).toBe(ziggyIsAllowed);
       }
     });
