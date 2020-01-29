@@ -1,0 +1,21 @@
+{
+  "extends": ["mixmax", "mixmax/prettier"],
+  "env": {
+    "commonjs": true,
+    "shared-node-browser": true
+  },
+  "globals": {
+    "Buffer": "readonly"
+  },
+  "overrides": [
+    {
+      "files": ["bin/**"],
+      "env": {
+        "node": true
+      },
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ]
+}

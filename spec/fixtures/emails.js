@@ -1014,5 +1014,5 @@ module.exports = [
   'Corrine.Wiegand@yahoo.com',
   'Leonel9@hotmail.com',
   'Kraig_Schuppe@hotmail.com',
-  'Berneice_Nader@hotmail.com'
+  'Berneice_Nader@hotmail.com',
 ];

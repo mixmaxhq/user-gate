@@ -6,16 +6,17 @@ exports.command = 'check <gate> <user>';
 exports.description = 'Checks whether a gate allows a user.';
 
 exports.builder = function(yargs) {
-  return yargs
-    .example('$0 check gate.json jeff@mixmax.com',
-      'Checks whether the gate allows "jeff@mixmax.com".');
+  return yargs.example(
+    '$0 check gate.json jeff@mixmax.com',
+    'Checks whether the gate allows "jeff@mixmax.com".'
+  );
 };
 
 exports.handler = function(argv) {
   var gate;
   try {
     gate = new UserGate(JSON.parse(fs.readFileSync(argv.gate, 'utf8')));
-  } catch(e) {
+  } catch (e) {
     console.error(`"${argv.gate}" does not represent a valid gate.`);
     return;
   }
